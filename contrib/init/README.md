@@ -1,11 +1,11 @@
 Sample configuration files for:
 ```
-SystemD: xsnd.service
-Upstart: xsnd.conf
-OpenRC:  xsnd.openrc
-         xsnd.openrcconf
-CentOS:  xsnd.init
-OS X:    org.xsn.xsnd.plist
+SystemD: vestxd.service
+Upstart: vestxd.conf
+OpenRC:  vestxd.openrc
+         vestxd.openrcconf
+CentOS:  vestxd.init
+OS X:    org.vestx.vestxd.plist
 ```
 have been made available to assist packagers in creating node packages here.
 

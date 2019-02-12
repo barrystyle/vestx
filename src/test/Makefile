@@ -1,6 +1,6 @@
 all:
-	$(MAKE) -C .. xsn_test
+	$(MAKE) -C .. vestx_test
 clean:
-	$(MAKE) -C .. xsn_test_clean
+	$(MAKE) -C .. vestx_test_clean
 check:
-	$(MAKE) -C .. xsn_test_check
+	$(MAKE) -C .. vestx_test_check

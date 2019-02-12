@@ -318,10 +318,10 @@ int CPrivateSend::GetDenominations(const std::vector<CTxOut>& vecTxOut, bool fSi
 bool CPrivateSend::GetDenominationsBits(int nDenom, std::vector<int> &vecBitsRet)
 {
     // ( bit on if present, 4 denominations example )
-    // bit 0 - 100XSN+1
-    // bit 1 - 10XSN+1
-    // bit 2 - 1XSN+1
-    // bit 3 - .1XSN+1
+    // bit 0 - 100VESTX+1
+    // bit 1 - 10VESTX+1
+    // bit 2 - 1VESTX+1
+    // bit 3 - .1VESTX+1
 
     int nMaxDenoms = vecStandardDenominations.size();
 
@@ -450,14 +450,14 @@ void CPrivateSend::SyncTransaction(const CTransaction& tx, const CBlock* pblock)
 //TODO: Rename/move to core
 void ThreadCheckPrivateSend(CConnman& connman)
 {
-    if(fLiteMode) return; // disable all XSN specific functionality
+    if(fLiteMode) return; // disable all VESTX specific functionality
 
     static bool fOneThread;
     if(fOneThread) return;
     fOneThread = true;
 
     // Make this thread recognisable as the PrivateSend thread
-    RenameThread("xsn-ps");
+    RenameThread("vestx-ps");
 
     unsigned int nTick = 0;
 

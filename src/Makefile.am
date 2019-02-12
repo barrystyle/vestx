@@ -24,23 +24,23 @@ BITCOIN_INCLUDES=-I$(builddir) $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFL
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
 BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
 
-LIBBITCOIN_SERVER=libxsn_server.a
-LIBBITCOIN_COMMON=libxsn_common.a
-LIBBITCOIN_CONSENSUS=libxsn_consensus.a
-LIBBITCOIN_CLI=libxsn_cli.a
-LIBBITCOIN_UTIL=libxsn_util.a
-LIBBITCOIN_CRYPTO=crypto/libxsn_crypto.a
-LIBBITCOINQT=qt/libxsnqt.a
+LIBBITCOIN_SERVER=libvestx_server.a
+LIBBITCOIN_COMMON=libvestx_common.a
+LIBBITCOIN_CONSENSUS=libvestx_consensus.a
+LIBBITCOIN_CLI=libvestx_cli.a
+LIBBITCOIN_UTIL=libvestx_util.a
+LIBBITCOIN_CRYPTO=crypto/libvestx_crypto.a
+LIBBITCOINQT=qt/libvestxqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 
 if ENABLE_ZMQ
-LIBBITCOIN_ZMQ=libxsn_zmq.a
+LIBBITCOIN_ZMQ=libvestx_zmq.a
 endif
 if BUILD_BITCOIN_LIBS
-LIBBITCOINCONSENSUS=libxsnconsensus.la
+LIBBITCOINCONSENSUS=libvestxconsensus.la
 endif
 if ENABLE_WALLET
-LIBBITCOIN_WALLET=libxsn_wallet.a
+LIBBITCOIN_WALLET=libvestx_wallet.a
 endif
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
@@ -66,15 +66,15 @@ TESTS =
 BENCHMARKS =
 
 if BUILD_BITCOIND
-  bin_PROGRAMS += xsnd
+  bin_PROGRAMS += vestxd
 endif
 
 if BUILD_BITCOIN_UTILS
-  bin_PROGRAMS += xsn-cli xsn-tx
+  bin_PROGRAMS += vestx-cli vestx-tx
 endif
 
 .PHONY: FORCE check-symbols check-security
-# xsn core #
+# vestx core #
 BITCOIN_CORE_H = \
   activemasternode.h \
   addrdb.h \
@@ -141,7 +141,7 @@ BITCOIN_CORE_H = \
   miner.h \
   net.h \
   net_processing.h \
-  net_processing_xsn.h \
+  net_processing_vestx.h \
   netfulfilledman.h \
   netaddress.h \
   netbase.h \
@@ -221,12 +221,12 @@ obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh "$(abs_top_builddir)/src/obj/build.h" \
 	  "$(abs_top_srcdir)"
-libxsn_util_a-clientversion.$(OBJEXT): obj/build.h
+libvestx_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between xsnd and xsn-qt
-libxsn_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
-libxsn_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libxsn_server_a_SOURCES = \
+# server: shared between vestxd and vestx-qt
+libvestx_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
+libvestx_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libvestx_server_a_SOURCES = \
   activemasternode.cpp \
   addrdb.cpp \
   addrman.cpp \
@@ -260,7 +260,7 @@ libxsn_server_a_SOURCES = \
   miner.cpp \
   net.cpp \
   net_processing.cpp \
-  net_processing_xsn.cpp \
+  net_processing_vestx.cpp \
   netfulfilledman.cpp \
   noui.cpp \
   policy/fees.cpp \
@@ -276,7 +276,7 @@ libxsn_server_a_SOURCES = \
   rpc/merchantnode.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
-  rpc/xsnmisc.cpp \
+  rpc/vestxmisc.cpp \
   rpc/governance.cpp\
   script/sigcache.cpp \
   spork.cpp \
@@ -297,20 +297,20 @@ libxsn_server_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ
-libxsn_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
-libxsn_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libxsn_zmq_a_SOURCES = \
+libvestx_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
+libvestx_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libvestx_zmq_a_SOURCES = \
   zmq/zmqabstractnotifier.cpp \
   zmq/zmqnotificationinterface.cpp \
   zmq/zmqpublishnotifier.cpp
 endif
 
 
-# wallet: shared between xsnd and xsn-qt, but only linked
+# wallet: shared between vestxd and vestx-qt, but only linked
 # when wallet enabled
-libxsn_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libxsn_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libxsn_wallet_a_SOURCES = \
+libvestx_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+libvestx_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libvestx_wallet_a_SOURCES = \
   interfaces/wallet.cpp \
   wallet/authhelper.cpp \
   wallet/crypter.cpp \
@@ -327,9 +327,9 @@ libxsn_wallet_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 # crypto primitives library
-crypto_libxsn_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES) $(PIC_FLAGS)
-crypto_libxsn_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
-crypto_libxsn_crypto_a_SOURCES = \
+crypto_libvestx_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES) $(PIC_FLAGS)
+crypto_libvestx_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
+crypto_libvestx_crypto_a_SOURCES = \
   crypto/aes.cpp \
   crypto/aes.h \
   crypto/chacha20.h \
@@ -350,7 +350,7 @@ crypto_libxsn_crypto_a_SOURCES = \
   crypto/sha512.h
 
 # x11
-crypto_libxsn_crypto_a_SOURCES += \
+crypto_libvestx_crypto_a_SOURCES += \
   crypto/blake.c \
   crypto/bmw.c \
   crypto/cubehash.c \
@@ -376,13 +376,13 @@ crypto_libxsn_crypto_a_SOURCES += \
   crypto/sph_types.h
 
 if USE_ASM
-crypto_libxsn_crypto_a_SOURCES += crypto/sha256_sse4.cpp
+crypto_libvestx_crypto_a_SOURCES += crypto/sha256_sse4.cpp
 endif
 
 # consensus: shared between all executables that validate any consensus rules.
-libxsn_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libxsn_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libxsn_consensus_a_SOURCES = \
+libvestx_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+libvestx_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libvestx_consensus_a_SOURCES = \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
@@ -399,7 +399,7 @@ libxsn_consensus_a_SOURCES = \
   primitives/transaction.h \
   pubkey.cpp \
   pubkey.h \
-  script/xsnconsensus.cpp \
+  script/vestxconsensus.cpp \
   script/interpreter.cpp \
   script/interpreter.h \
   script/script.cpp \
@@ -415,10 +415,10 @@ libxsn_consensus_a_SOURCES = \
   utilstrencodings.h \
   version.h
 
-# common: shared between xsnd, and xsn-qt and non-server tools
-libxsn_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libxsn_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libxsn_common_a_SOURCES = \
+# common: shared between vestxd, and vestx-qt and non-server tools
+libvestx_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+libvestx_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libvestx_common_a_SOURCES = \
   base58.cpp \
   bech32.cpp \
   chainparams.cpp \
@@ -443,9 +443,9 @@ libxsn_common_a_SOURCES = \
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
 # backward-compatibility objects and their sanity checks are linked.
-libxsn_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libxsn_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libxsn_util_a_SOURCES = \
+libvestx_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+libvestx_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libvestx_util_a_SOURCES = \
   support/lockedpool.cpp \
   chainparamsbase.cpp \
   clientversion.cpp \
@@ -469,30 +469,30 @@ libxsn_util_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 if GLIBC_BACK_COMPAT
-libxsn_util_a_SOURCES += compat/glibc_compat.cpp
+libvestx_util_a_SOURCES += compat/glibc_compat.cpp
 endif
 
-# cli: shared between xsn-cli and xsn-qt
-libxsn_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libxsn_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libxsn_cli_a_SOURCES = \
+# cli: shared between vestx-cli and vestx-qt
+libvestx_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+libvestx_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libvestx_cli_a_SOURCES = \
   rpc/client.cpp \
   $(BITCOIN_CORE_H)
 
-nodist_libxsn_util_a_SOURCES = $(srcdir)/obj/build.h
+nodist_libvestx_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# xsnd binary #
-xsnd_SOURCES = xsnd.cpp
-xsnd_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-xsnd_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-xsnd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# vestxd binary #
+vestxd_SOURCES = vestxd.cpp
+vestxd_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+vestxd_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+vestxd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-xsnd_SOURCES += xsnd-res.rc
+vestxd_SOURCES += vestxd-res.rc
 endif
 
-xsnd_LDADD = \
+vestxd_LDADD = \
   $(LIBBITCOIN_SERVER) \
   $(LIBBITCOIN_WALLET) \
   $(LIBBITCOIN_COMMON) \
@@ -506,38 +506,38 @@ xsnd_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-xsnd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
+vestxd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
-# xsn-cli binary #
-xsn_cli_SOURCES = xsn-cli.cpp
-xsn_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
-xsn_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-xsn_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# vestx-cli binary #
+vestx_cli_SOURCES = vestx-cli.cpp
+vestx_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
+vestx_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+vestx_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-xsn_cli_SOURCES += xsn-cli-res.rc
+vestx_cli_SOURCES += vestx-cli-res.rc
 endif
 
-xsn_cli_LDADD = \
+vestx_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO)
 
-xsn_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
+vestx_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
-# xsn-tx binary #
-xsn_tx_SOURCES = xsn-tx.cpp
-xsn_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-xsn_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-xsn_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# vestx-tx binary #
+vestx_tx_SOURCES = vestx-tx.cpp
+vestx_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+vestx_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+vestx_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-xsn_tx_SOURCES += xsn-tx-res.rc
+vestx_tx_SOURCES += vestx-tx-res.rc
 endif
 
-xsn_tx_LDADD = \
+vestx_tx_LDADD = \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
@@ -545,22 +545,22 @@ xsn_tx_LDADD = \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBSECP256K1)
 
-xsn_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+vestx_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
-# xsnconsensus library #
+# vestxconsensus library #
 if BUILD_BITCOIN_LIBS
-include_HEADERS = script/xsnconsensus.h
-libxsnconsensus_la_SOURCES = $(crypto_libxsn_crypto_a_SOURCES) $(libxsn_consensus_a_SOURCES)
+include_HEADERS = script/vestxconsensus.h
+libvestxconsensus_la_SOURCES = $(crypto_libvestx_crypto_a_SOURCES) $(libvestx_consensus_a_SOURCES)
 
 if GLIBC_BACK_COMPAT
-  libxsnconsensus_la_SOURCES += compat/glibc_compat.cpp
+  libvestxconsensus_la_SOURCES += compat/glibc_compat.cpp
 endif
 
-libxsnconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
-libxsnconsensus_la_LIBADD = $(LIBSECP256K1)
-libxsnconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
-libxsnconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libvestxconsensus_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined $(RELDFLAGS)
+libvestxconsensus_la_LIBADD = $(LIBSECP256K1)
+libvestxconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
+libvestxconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
 endif
 #
@@ -590,12 +590,12 @@ CLEANFILES += obj/build.h
 EXTRA_DIST = $(CTAES_DIST)
 
 
-config/xsn-config.h: config/stamp-h1
+config/vestx-config.h: config/stamp-h1
 	@$(MAKE) -C $(top_builddir) $(subdir)/$(@)
-config/stamp-h1: $(top_srcdir)/$(subdir)/config/xsn-config.h.in $(top_builddir)/config.status
+config/stamp-h1: $(top_srcdir)/$(subdir)/config/vestx-config.h.in $(top_builddir)/config.status
 	$(AM_V_at)$(MAKE) -C $(top_builddir) $(subdir)/$(@)
-$(top_srcdir)/$(subdir)/config/xsn-config.h.in:  $(am__configure_deps)
-	$(AM_V_at)$(MAKE) -C $(top_srcdir) $(subdir)/config/xsn-config.h.in
+$(top_srcdir)/$(subdir)/config/vestx-config.h.in:  $(am__configure_deps)
+	$(AM_V_at)$(MAKE) -C $(top_srcdir) $(subdir)/config/vestx-config.h.in
 
 clean-local:
 	-$(MAKE) -C secp256k1 clean

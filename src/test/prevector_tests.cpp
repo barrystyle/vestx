@@ -9,7 +9,7 @@
 #include <serialize.h>
 #include <streams.h>
 
-#include <test/test_xsn.h>
+#include <test/test_vestx.h>
 
 #include <boost/test/unit_test.hpp>
 

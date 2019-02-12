@@ -1,36 +1,36 @@
 #!/bin/bash
 #
-#  xsnd The xsn core server.
+#  vestxd The vestx core server.
 #
 #
 # chkconfig: 345 80 20
-# description: xsnd
-# processname: xsnd
+# description: vestxd
+# processname: vestxd
 #
 
 # Source function library.
 . /etc/init.d/functions
 
-# you can override defaults in /etc/sysconfig/xsnd, see below
-if [ -f /etc/sysconfig/xsnd ]; then
-        . /etc/sysconfig/xsnd
+# you can override defaults in /etc/sysconfig/vestxd, see below
+if [ -f /etc/sysconfig/vestxd ]; then
+        . /etc/sysconfig/vestxd
 fi
 
 RETVAL=0
 
-prog=xsnd
-# you can override the lockfile via BITCOIND_LOCKFILE in /etc/sysconfig/xsnd
-lockfile=${BITCOIND_LOCKFILE-/var/lock/subsys/xsnd}
+prog=vestxd
+# you can override the lockfile via BITCOIND_LOCKFILE in /etc/sysconfig/vestxd
+lockfile=${BITCOIND_LOCKFILE-/var/lock/subsys/vestxd}
 
-# xsnd defaults to /usr/bin/xsnd, override with BITCOIND_BIN
-xsnd=${BITCOIND_BIN-/usr/bin/xsnd}
+# vestxd defaults to /usr/bin/vestxd, override with BITCOIND_BIN
+vestxd=${BITCOIND_BIN-/usr/bin/vestxd}
 
-# xsnd opts default to -disablewallet, override with BITCOIND_OPTS
-xsnd_opts=${BITCOIND_OPTS--disablewallet}
+# vestxd opts default to -disablewallet, override with BITCOIND_OPTS
+vestxd_opts=${BITCOIND_OPTS--disablewallet}
 
 start() {
     echo -n $"Starting $prog: "
-    daemon $DAEMONOPTS $xsnd $xsnd_opts
+    daemon $DAEMONOPTS $vestxd $vestxd_opts
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch $lockfile

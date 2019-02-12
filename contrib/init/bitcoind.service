@@ -1,23 +1,23 @@
 # It is not recommended to modify this file in-place, because it will
 # be overwritten during package upgrades. If you want to add further
 # options or overwrite existing ones then use
-# $ systemctl edit xsnd.service
+# $ systemctl edit vestxd.service
 # See "man systemd.service" for details.
 
 # Note that almost all daemon options could be specified in
-# /etc/xsn/xsn.conf
+# /etc/vestx/vestx.conf
 
 [Unit]
-Description=XSN daemon
+Description=VESTX daemon
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/xsnd -daemon -conf=/etc/xsn/xsn.conf -pid=/run/xsnd/xsnd.pid
-# Creates /run/xsnd owned by xsn
-RuntimeDirectory=xsnd
-User=xsn
+ExecStart=/usr/bin/vestxd -daemon -conf=/etc/vestx/vestx.conf -pid=/run/vestxd/vestxd.pid
+# Creates /run/vestxd owned by vestx
+RuntimeDirectory=vestxd
+User=vestx
 Type=forking
-PIDFile=/run/xsnd/xsnd.pid
+PIDFile=/run/vestxd/vestxd.pid
 Restart=on-failure
 
 # Hardening measures

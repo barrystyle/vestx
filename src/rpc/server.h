@@ -138,7 +138,7 @@ public:
 };
 
 /**
- * XSN RPC command dispatcher.
+ * VESTX RPC command dispatcher.
  */
 class CRPCTable
 {

@@ -12,7 +12,7 @@
 
 #include <support/events.h>
 
-#include <test/test_xsn.h>
+#include <test/test_vestx.h>
 
 #include <vector>
 
