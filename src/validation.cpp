@@ -156,6 +156,7 @@ public:
     BlockMap mapBlockIndex;
     std::multimap<CBlockIndex*, CBlockIndex*> mapBlocksUnlinked;
     CBlockIndex *pindexBestInvalid = nullptr;
+    std::map<COutPoint, int> mapStakeSpent;
 
     bool LoadBlockIndex(const Consensus::Params& consensus_params, CBlockTreeDB& blocktree);
 
@@ -1631,7 +1632,7 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
         }
 
         // restore inputs
-        if (i > 0) { // not coinbases
+        if (i > 0) {
             CTxUndo &txundo = blockUndo.vtxundo[i-1];
             if (txundo.vprevout.size() != tx.vin.size()) {
                 error("DisconnectBlock(): transaction and undo data inconsistent");
@@ -1642,8 +1643,10 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
                 int res = ApplyTxInUndo(std::move(txundo.vprevout[j]), view, out);
                 if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
                 fClean = fClean && res != DISCONNECT_UNCLEAN;
+
+                // erase the spent input
+                mapStakeSpent.erase(out);
             }
-            // At this point, all of txundo.vprevout should have been moved out.
         }
     }
 
@@ -2144,6 +2147,27 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     if(g_txindex) {
         if(!g_txindex->WriteIndex(vPos)) {
             return AbortNode(state, "Failed to write transaction index");
+        }
+    }
+
+    // add new entries
+    for (const CTransactionRef ptx: block.vtx) {
+        const CTransaction& tx = *ptx;
+        if (tx.IsCoinBase())
+            continue;
+        for (const CTxIn in: tx.vin) {
+            LogPrintf("mapStakeSpent: Insert %s | %u\n", in.prevout.ToString(), pindex->nHeight);
+            mapStakeSpent.insert(std::make_pair(in.prevout, pindex->nHeight));
+        }
+    }
+
+    // delete old entries
+    for (auto it = mapStakeSpent.begin(); it != mapStakeSpent.end();) {
+        if (it->second < pindex->nHeight - Params().MaxReorganizationDepth()) {
+            LogPrintf("mapStakeSpent: Erase %s | %u\n", it->first.ToString(), it->second);
+            it = mapStakeSpent.erase(it);
+        }else {
+            it++;
         }
     }
 
@@ -3400,6 +3424,10 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
             return state.DoS(100, error("%s: forked chain older than last checkpoint (height %d)", __func__, nHeight), REJECT_CHECKPOINT, "bad-fork-prior-to-checkpoint");
     }
 
+    // Check that the block satisfies synchronized checkpoint
+    if (!Checkpoints::CheckSync(nHeight))
+        return state.DoS(1, error("%s: forked chain older than synchronized checkpoint (height %d)", __func__, nHeight), REJECT_CHECKPOINT, "bad-fork-prior-to-synch-checkpoint");
+
     // Check timestamp against prev
     if (block.GetBlockTime() <= pindexPrev->GetMedianTimePast())
         return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
@@ -3609,6 +3637,20 @@ bool ProcessNewBlockHeaders(const std::vector<CBlockHeader>& headers, CValidatio
         LOCK(cs_main);
         for (const CBlockHeader& header : headers) {
             CBlockIndex *pindex = nullptr; // Use a temp pindex instead of ppindex to avoid a const_cast
+
+            // Check for the checkpoint
+            if (header.hashPrevBlock != chainActive.Tip()->GetBlockHash())
+            {
+                // Extra checks to prevent "fill up memory by spamming with bogus blocks"
+                const CBlockIndex* pcheckpoint = Checkpoints::AutoSelectSyncCheckpoint();
+                int64_t deltaTime = header.GetBlockTime() - pcheckpoint->nTime;
+                if (deltaTime < 0)
+                {
+                    return state.DoS(1, false, REJECT_INVALID, "older-than-checkpoint", false,
+                                     "ProcessNewBlockHeaders(): Block with a timestamp before last checkpoint");
+                }
+            }
+
             if (!g_chainstate.AcceptBlockHeader(header, state, chainparams, &pindex)) {
                 if (first_invalid) *first_invalid = header;
                 return false;
@@ -3651,6 +3693,13 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
 
     CBlockIndex *pindexDummy = nullptr;
     CBlockIndex *&pindex = ppindex ? *ppindex : pindexDummy;
+
+    // Get prev block index
+    CBlockIndex* pindexPrev = nullptr;
+    BlockMap::iterator mi = mapBlockIndex.find(block.hashPrevBlock);
+    if (mi == mapBlockIndex.end())
+        return state.DoS(10, error("%s: prev block not found", __func__), 0, "prev-blk-not-found");
+    pindexPrev = (*mi).second;
 
     if (!AcceptBlockHeader(block, state, chainparams, &pindex))
         return false;
@@ -3703,6 +3752,60 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     // (but if it does not build on our best tip, let the SendMessages loop relay it)
     if (!IsInitialBlockDownload() && chainActive.Tip() == pindex->pprev)
         GetMainSignals().NewPoWValidBlock(pindex, pblock);
+
+    if (block.IsProofOfStake()) {
+        LOCK(cs_main);
+
+        CCoinsViewCache coins(pcoinsTip.get());
+
+        const CTransaction& tx = *block.vtx[1];
+        if (!coins.HaveInputs(tx)) {
+            // the inputs are spent at the chain tip so we should look at the recently spent outputs
+
+            for (CTxIn in : tx.vin) {
+                auto it = mapStakeSpent.find(in.prevout);
+                if (it == mapStakeSpent.end()) {
+                    return false;
+                }
+                if (it->second <= pindexPrev->nHeight) {
+                    return false;
+                }
+            }
+        }
+
+        // if this is on fork
+        if (!chainActive.Contains(pindexPrev) && pindexPrev != nullptr) {
+            // start at the block we're adding on to
+            CBlockIndex *last = pindexPrev;
+
+            // while that block is not on the main chain
+            while (!chainActive.Contains(last) && pindexPrev != nullptr) {
+                CBlock bl;
+                ReadBlockFromDisk(bl, last, Params().GetConsensus());
+                // loop through every spent input from said block
+
+                for (CTransactionRef tRef : bl.vtx) {
+                    const CTransaction& t = *tRef;
+                    for (CTxIn in : t.vin) {
+                        // loop through every spent input in the staking transaction of the new block
+
+                        const CTransaction& tx = *block.vtx[1];
+                        for (CTxIn stakeIn : tx.vin) {
+
+                            // if they spent the same input
+                            if (stakeIn.prevout == in.prevout) {
+                                // reject the block
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                // go to the parent block
+                last = pindexPrev->pprev;
+            }
+        }
+    }
 
     // Write block to history file
     try {

@@ -703,7 +703,7 @@ void static XSNMiner(const CChainParams& chainparams, CConnman& connman,
             // process proof of stake block
             if(fProofOfStake) {
                 SetThreadPriority(THREAD_PRIORITY_NORMAL);
-                bool ret = ProcessBlockFound(pblock, chainparams);
+                ProcessBlockFound(pblock, chainparams);
                 SetThreadPriority(THREAD_PRIORITY_LOWEST);
                 MilliSleep(10000);
                 continue;

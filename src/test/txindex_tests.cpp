@@ -20,10 +20,6 @@ BOOST_FIXTURE_TEST_CASE(txindex_initial_sync, TestChain100Setup)
     CTransactionRef tx_disk;
     uint256 block_hash;
 
-    // Allow tx index to catch up with the block index.
-    constexpr int64_t timeout_ms = 10 * 1000;
-    int64_t time_start = GetTimeMillis();
-
     // Check that txindex has all txs that were in the chain before it started.
     for (const auto& txn : m_coinbase_txns) {
         if (!g_txindex->FindTx(txn->GetHash(), block_hash, tx_disk)) {

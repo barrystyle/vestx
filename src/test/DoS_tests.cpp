@@ -92,20 +92,6 @@ BOOST_AUTO_TEST_CASE(outbound_slow_chain_eviction)
     peerLogic->FinalizeNode(dummyNode1.GetId(), dummy);
 }
 
-static void AddRandomOutboundPeer(std::vector<CNode *> &vNodes, PeerLogicValidation &peerLogic)
-{
-    CAddress addr(ip(GetRandInt(0xffffffff)), NODE_NONE);
-    vNodes.emplace_back(new CNode(id++, ServiceFlags(NODE_NETWORK|NODE_WITNESS), 0, INVALID_SOCKET, addr, 0, 0, CAddress(), "", /*fInboundIn=*/ false));
-    CNode &node = *vNodes.back();
-    node.SetSendVersion(PROTOCOL_VERSION);
-
-    peerLogic.InitializeNode(&node);
-    node.nVersion = 1;
-    node.fSuccessfullyConnected = true;
-
-    CConnmanTest::AddNode(node);
-}
-
 #if 0
 
 BOOST_AUTO_TEST_CASE(stale_tip_peer_management)
