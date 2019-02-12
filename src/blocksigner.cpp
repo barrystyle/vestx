@@ -33,11 +33,14 @@ bool CBlockSigner::SignBlock()
     CKey keySecret;
     CPubKey::InputScriptType scriptType;
 
+    // avoid compiler warnings regarding uninit variables
+    CTxDestination destination;
+    scriptType = GetScriptTypeFromDestination(destination);
+
     if(refBlock.IsProofOfStake())
     {
         const CTxOut& txout = refBlock.vtx[1]->vout[1];
 
-        CTxDestination destination;
         if(!ExtractDestination(txout.scriptPubKey, destination))
         {
             return error("Failed to extract destination while signing: %s\n", txout.ToString());
@@ -69,7 +72,7 @@ bool CBlockSigner::SignBlock()
             scriptType = GetScriptTypeFromDestination(destination);
         }
     }
-//?
+
     return CHashSigner::SignHash(refBlock.IsTPoSBlock() ? refBlock.GetTPoSHash() : refBlock.GetHash(), keySecret, scriptType, refBlock.vchBlockSig);
 }
 

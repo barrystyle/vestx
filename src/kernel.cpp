@@ -278,61 +278,10 @@ static bool GetKernlStakeModifierV03(uint256 hashBlockFrom, unsigned int nTimeTx
     return true;
 }
 
-// V0.5: Stake modifier used to hash for a stake kernel is chosen as the stake
-// modifier that is (nStakeMinAge minus a selection interval) earlier than the
-// stake, thus at least a selection interval later than the coin generating the // kernel, as the generating coin is from at least nStakeMinAge ago.
-static bool GetKernelStakeModifierV05(unsigned int nTimeTx, uint64_t& nStakeModifier, int& nStakeModifierHeight, int64_t& nStakeModifierTime, bool fPrintProofOfStake)
-{
-    auto nStakeMinAge = Params().GetConsensus().nStakeMinAge;
-    const CBlockIndex* pindex = pindexBestHeader;
-    nStakeModifierHeight = pindex->nHeight;
-    nStakeModifierTime = pindex->GetBlockTime();
-    int64_t nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
-
-    if(fPrintProofOfStake)
-    {
-        LogPrint(BCLog::KERNEL, "%s : stake modifier time: %s interval: %d, time: %s\n",
-                 __func__,
-                 DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nStakeModifierTime).c_str(),
-                 nStakeModifierSelectionInterval,
-                 DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTimeTx).c_str());
-    }
-
-    //    TODO_POS: check this
-    //    if (nStakeModifierTime + nStakeMinAge - nStakeModifierSelectionInterval <= nTimeTx)
-    //    {
-    //        // Best block is still more than
-    //        // (nStakeMinAge minus a selection interval) older than kernel timestamp
-    //        if (fPrintProofOfStake)
-    //            return error("GetKernelStakeModifier() : best block %s at height %d too old for stake",
-    //                         pindex->GetBlockHash().ToString().c_str(), pindex->nHeight);
-    //        else
-    //            return false;
-    //    }
-    // loop to find the stake modifier earlier by
-    // (nStakeMinAge minus a selection interval)
-    while (nStakeModifierTime + nStakeMinAge - nStakeModifierSelectionInterval > nTimeTx)
-    {
-        if (!pindex->pprev)
-        {   // reached genesis block; should not happen
-            return error("GetKernelStakeModifier() : reached genesis block");
-        }
-        pindex = pindex->pprev;
-        if (pindex->GeneratedStakeModifier())
-        {
-            nStakeModifierHeight = pindex->nHeight;
-            nStakeModifierTime = pindex->GetBlockTime();
-        }
-    }
-    nStakeModifier = pindex->nStakeModifier;
-    return true;
-}
-
 // Get the stake modifier specified by the protocol to hash for a stake kernel
 static bool GetKernelStakeModifier(uint256 hashBlockFrom, unsigned int nTimeTx, uint64_t& nStakeModifier, int& nStakeModifierHeight, int64_t& nStakeModifierTime, bool fPrintProofOfStake)
 {
     return GetKernlStakeModifierV03(hashBlockFrom, nTimeTx, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake);
-    //    return GetKernelStakeModifierV05(nTimeTx, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake);
 }
 
 uint256 stakeHash(unsigned int nTimeTx, CDataStream ss, unsigned int prevoutIndex, uint256 prevoutHash, unsigned int nTimeBlockFrom)

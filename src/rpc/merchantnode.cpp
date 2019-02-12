@@ -187,14 +187,6 @@ static UniValue merchantnodelist(const JSONRPCRequest& request)
                     );
     }
 
-    if (strMode == "full" || strMode == "lastpaidtime" || strMode == "lastpaidblock") {
-        CBlockIndex* pindex = NULL;
-        {
-            LOCK(cs_main);
-            pindex = chainActive.Tip();
-        }
-    }
-
     std::set<CService> myMerchantNodesIps;
     return  ListOfMerchantNodes(request.params, myMerchantNodesIps, false);
 }
@@ -415,23 +407,6 @@ static UniValue merchantnode(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
-static bool DecodeHexVecMnb(std::vector<CMerchantnodeBroadcast>& vecMnb, std::string strHexMnb) {
-
-    if (!IsHex(strHexMnb))
-        return false;
-
-    std::vector<unsigned char> mnbData(ParseHex(strHexMnb));
-    CDataStream ssData(mnbData, SER_NETWORK, PROTOCOL_VERSION);
-    try {
-        ssData >> vecMnb;
-    }
-    catch (const std::exception&) {
-        return false;
-    }
-
-    return true;
-}
-
 UniValue merchantsentinelping(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1) {
@@ -585,7 +560,7 @@ UniValue tposcontract(const JSONRPCRequest& request)
         if(!tmpContract.IsValid())
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Contract is invalid");
 
-            pwallet->RemoveWatchOnly(GetScriptForDestination(tmpContract.tposAddress.Get()));
+        pwallet->RemoveWatchOnly(GetScriptForDestination(tmpContract.tposAddress.Get()));
     }
 
     return NullUniValue;

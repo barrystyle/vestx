@@ -565,7 +565,7 @@ bool CWallet::Unlock(const SecureString& strWalletPassphrase, bool stakingOnly)
                 continue; // try another master key
             if (CCryptoKeyStore::Unlock(_vMasterKey))
                 fWalletUnlockStakingOnly = stakingOnly;
-                return true;
+            return true;
         }
     }
     return false;
@@ -3751,7 +3751,6 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
         MilliSleep(10000);
 
     bool fKernelFound = false;
-    CAmount nCredit = 0;
 
     COutPoint tposContractOutpoint = TPoSUtils::GetContractCollateralOutpoint(tposContract);
     for(const std::pair<const CWalletTx*, unsigned int> &pcoin : setStakeCoins)
@@ -3798,12 +3797,6 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
         LogPrint(BCLog::KERNEL, "Failed to find coinstake kernel\n");
         return false;
     }
-
-    // Limit size
-    unsigned int nBytes = ::GetSerializeSize(txNew, SER_NETWORK, PROTOCOL_VERSION);
-    //    if (nBytes >= DEFAULT_BLOCK_MAX_SIZE / 5){
-    //        return error("CreateCoinStake() : exceeded coinstake size limit");
-    //    }
 
     // Update coinbase transaction with additional info about masternode and governance payments,
     // get some info back to pass to getblocktemplate
