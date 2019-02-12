@@ -1,6 +1,6 @@
-usr/local/bin/xsn-qt usr/bin
-share/pixmaps/xsn32.xpm usr/share/pixmaps
-share/pixmaps/xsn16.xpm usr/share/pixmaps
-share/pixmaps/xsn128.png usr/share/pixmaps
-debian/xsn-qt.desktop usr/share/applications
-debian/xsn-qt.protocol usr/share/kde4/services/
+usr/local/bin/vestx-qt usr/bin
+share/pixmaps/vestx32.xpm usr/share/pixmaps
+share/pixmaps/vestx16.xpm usr/share/pixmaps
+share/pixmaps/vestx128.png usr/share/pixmaps
+debian/vestx-qt.desktop usr/share/applications
+debian/vestx-qt.protocol usr/share/kde4/services/

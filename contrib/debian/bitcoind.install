@@ -1,2 +1,2 @@
-usr/local/bin/xsnd usr/bin
-usr/local/bin/xsn-cli usr/bin
+usr/local/bin/vestxd usr/bin
+usr/local/bin/vestx-cli usr/bin

@@ -1,8 +1,8 @@
-/usr/bin/xsn-cli		--	gen_context(system_u:object_r:xsn_exec_t,s0)
-/usr/sbin/xsnd		--	gen_context(system_u:object_r:xsn_exec_t,s0)
-/usr/lib(64)?/xsn/xsnd		--	gen_context(system_u:object_r:xsn_exec_t,s0)
+/usr/bin/vestx-cli		--	gen_context(system_u:object_r:vestx_exec_t,s0)
+/usr/sbin/vestxd		--	gen_context(system_u:object_r:vestx_exec_t,s0)
+/usr/lib(64)?/vestx/vestxd		--	gen_context(system_u:object_r:vestx_exec_t,s0)
 
-/etc/xsn(/.*)?		gen_context(system_u:object_r:xsn_conf_t,s0)
-/var/lib/xsn(/.*)?		gen_context(system_u:object_r:xsn_var_lib_t,s0)
+/etc/vestx(/.*)?		gen_context(system_u:object_r:vestx_conf_t,s0)
+/var/lib/vestx(/.*)?		gen_context(system_u:object_r:vestx_var_lib_t,s0)
 
-(/var)?/run/xsnd(/.*)?   gen_context(system_u:object_r:xsn_var_run_t,s0)
+(/var)?/run/vestxd(/.*)?   gen_context(system_u:object_r:vestx_var_run_t,s0)

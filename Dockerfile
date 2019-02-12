@@ -23,17 +23,17 @@ RUN curl -L http://download.oracle.com/berkeley-db/db-4.8.30.tar.gz | tar -xz -C
     make -j$(nproc) && make install && \
     cd / && rm -rf /tmp/db-4.8.30
 
-RUN useradd -mU xsn
+RUN useradd -mU vestx
 
-COPY . /tmp/xsncore/
+COPY . /tmp/vestx/
 
-RUN cd /tmp/xsncore && \
+RUN cd /tmp/vestx && \
     ./autogen.sh && \
     ./configure --without-gui --prefix=/usr && \
     make -j$(nproc) && \
     make check && \
     make install && \
-    cd / && rm -rf /tmp/xsncore
+    cd / && rm -rf /tmp/vestx
 
 # Remove unused packages
 RUN apt-get remove -y \
@@ -50,15 +50,15 @@ RUN apt-get remove -y \
     libssl-dev \
     libevent-dev
 
-USER xsn:xsn
+USER vestx:vestx
 
-RUN mkdir /home/xsn/.xsncore && \
-    touch /home/xsn/.xsncore/xsn.conf
+RUN mkdir /home/vestx/.vestx && \
+    touch /home/vestx/.vestx/vestx.conf
 
-VOLUME [ "/home/xsn/.xsncore" ]
+VOLUME [ "/home/vestx/.vestx" ]
 
 EXPOSE 62583
 EXPOSE 8332
 EXPOSE 18332
 
-ENTRYPOINT ["/usr/bin/xsnd", "--conf=/home/xsn/.xsncore/xsn.conf"]
+ENTRYPOINT ["/usr/bin/vestxd", "--conf=/home/vestx/.vestx/vestx.conf"]

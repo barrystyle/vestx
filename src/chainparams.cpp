@@ -94,9 +94,9 @@ public:
         consensus.BIP65Height = consensus.nLastPoWBlock; // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
         consensus.BIP66Height = consensus.nLastPoWBlock; // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
-        consensus.nPowTargetTimespan = 24 * 60 * 60; // XSN: 1 day
-        consensus.nPowTargetSpacing = 1 * 60; // XSN: 1 minutes
-        consensus.nPosTargetSpacing = 1 * 60; // XSN: 1 minutes
+        consensus.nPowTargetTimespan = 24 * 60 * 60; // VESTX: 1 day
+        consensus.nPowTargetSpacing = 1 * 60; // VESTX: 1 minutes
+        consensus.nPosTargetSpacing = 1 * 60; // VESTX: 1 minutes
         consensus.nPosTargetTimespan = 60 * 40;
         consensus.nMerchantnodeMinimumConfirmations = 1;
         consensus.nMasternodeMinimumConfirmations = 15;
@@ -153,12 +153,12 @@ public:
         // This is fine at runtime as we'll fall back to using them as a oneshot if they don't support the
         // service bits we want, but we should get them updated to support all service bits wanted by any
         // release ASAP to avoid it where possible.
-//        vSeeds.emplace_back("seed.xsn.sipa.be"); // Pieter Wuille, only supports x1, x5, x9, and xd
+//        vSeeds.emplace_back("seed.vestx.sipa.be"); // Pieter Wuille, only supports x1, x5, x9, and xd
 //        vSeeds.emplace_back("dnsseed.bluematt.me"); // Matt Corallo, only supports x9
-//        vSeeds.emplace_back("dnsseed.xsn.dashjr.org"); // Luke Dashjr
-//        vSeeds.emplace_back("seed.xsnstats.com"); // Christian Decker, supports x1 - xf
-//        vSeeds.emplace_back("seed.xsn.jonasschnelli.ch"); // Jonas Schnelli, only supports x1, x5, x9, and xd
-        vSeeds.emplace_back("autoseeds.xsnseed.xyz");
+//        vSeeds.emplace_back("dnsseed.vestx.dashjr.org"); // Luke Dashjr
+//        vSeeds.emplace_back("seed.vestxstats.com"); // Christian Decker, supports x1 - xf
+//        vSeeds.emplace_back("seed.vestx.jonasschnelli.ch"); // Jonas Schnelli, only supports x1, x5, x9, and xd
+        vSeeds.emplace_back("autoseeds.vestxseed.xyz");
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,76);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,16);
@@ -226,8 +226,8 @@ public:
         consensus.BIP65Height = 0; // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
         consensus.BIP66Height = 0; // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
         consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
-        consensus.nPowTargetTimespan = 24 * 60 * 60; // XSN: 1 day
-        consensus.nPowTargetSpacing = 1 * 60; // XSN: 1 minutes
+        consensus.nPowTargetTimespan = 24 * 60 * 60; // VESTX: 1 day
+        consensus.nPowTargetSpacing = 1 * 60; // VESTX: 1 minutes
         consensus.nPosTargetSpacing = 1 * 60; // PoSW: 1 minutes
         consensus.nPosTargetTimespan = 60 * 40;
         consensus.fPowAllowMinDifficultyBlocks = false;
@@ -288,9 +288,9 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-//        vSeeds.emplace_back("testnet-seed.xsn.jonasschnelli.ch");
-//        vSeeds.emplace_back("seed.txsn.petertodd.org");
-//        vSeeds.emplace_back("seed.testnet.xsn.sprovoost.nl");
+//        vSeeds.emplace_back("testnet-seed.vestx.jonasschnelli.ch");
+//        vSeeds.emplace_back("seed.tvestx.petertodd.org");
+//        vSeeds.emplace_back("seed.testnet.vestx.sprovoost.nl");
 //        vSeeds.emplace_back("testnet-seed.bluematt.me"); // Just a static list of stable node(s), only supports x9
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
@@ -354,8 +354,8 @@ public:
         consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in rpc activation tests)
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowTargetTimespan = 24 * 60 * 60; // XSN: 1 day
-        consensus.nPowTargetSpacing = 1 * 60; // XSN: 1 minutes
+        consensus.nPowTargetTimespan = 24 * 60 * 60; // VESTX: 1 day
+        consensus.nPowTargetSpacing = 1 * 60; // VESTX: 1 minutes
         consensus.nPosTargetSpacing = 1 * 60; // PoSW: 1 minutes
         consensus.nPosTargetTimespan = 60 * 40;
         consensus.fPowAllowMinDifficultyBlocks = true;

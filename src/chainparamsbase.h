@@ -10,8 +10,8 @@
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between xsn-cli and xsnd)
- * of a given instance of the XSN system.
+ * CBaseChainParams defines the base parameters (shared between vestx-cli and vestxd)
+ * of a given instance of the VESTX system.
  */
 class CBaseChainParams
 {

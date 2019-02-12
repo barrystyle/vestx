@@ -9,7 +9,7 @@
 #include <uint256.h>
 #include <util.h>
 #include <utilstrencodings.h>
-#include <test/test_xsn.h>
+#include <test/test_vestx.h>
 
 #include <string>
 #include <vector>

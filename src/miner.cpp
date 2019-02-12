@@ -575,13 +575,13 @@ static bool ProcessBlockFound(const std::shared_ptr<const CBlock> &pblock, const
     return true;
 }
 
-// ***TODO*** that part changed in xsn, we are using a mix with old one here for now
-void static XSNMiner(const CChainParams& chainparams, CConnman& connman,
+// ***TODO*** that part changed in vestx, we are using a mix with old one here for now
+void static VESTXMiner(const CChainParams& chainparams, CConnman& connman,
                      CWallet* pwallet, bool fProofOfStake)
 {
     LogPrintf("XsnMiner -- started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
-    RenameThread("xsn-miner");
+    RenameThread("vestx-miner");
 
     unsigned int nExtraNonce = 0;
 
@@ -687,7 +687,7 @@ void static XSNMiner(const CChainParams& chainparams, CConnman& connman,
                 CBlockSigner signer(*pblock, pwallet, contract);
 
                 if (!signer.SignBlock()) {
-                    LogPrintf("XSNMiner(): Signing new block failed \n");
+                    LogPrintf("VESTXMiner(): Signing new block failed \n");
                     throw std::runtime_error(strprintf("%s: SignBlock failed", __func__));
                 }
 
@@ -781,7 +781,7 @@ void static XSNMiner(const CChainParams& chainparams, CConnman& connman,
     }
 }
 
-void GenerateXSNs(bool fGenerate,
+void GenerateVESTXs(bool fGenerate,
                   int nThreads,
                   const CChainParams& chainparams,
                   CConnman &connman)
@@ -803,7 +803,7 @@ void GenerateXSNs(bool fGenerate,
 
     minerThreads = new boost::thread_group();
     for (int i = 0; i < nThreads; i++)
-        minerThreads->create_thread(boost::bind(&XSNMiner, boost::cref(chainparams), boost::ref(connman), GetWallets().front(), false));
+        minerThreads->create_thread(boost::bind(&VESTXMiner, boost::cref(chainparams), boost::ref(connman), GetWallets().front(), false));
 }
 
 void ThreadStakeMinter(const CChainParams &chainparams, CConnman &connman, CWallet *pwallet)
@@ -811,7 +811,7 @@ void ThreadStakeMinter(const CChainParams &chainparams, CConnman &connman, CWall
     boost::this_thread::interruption_point();
     LogPrintf("ThreadStakeMinter started\n");
     try {
-        XSNMiner(chainparams, connman, pwallet, true);
+        VESTXMiner(chainparams, connman, pwallet, true);
         boost::this_thread::interruption_point();
     } catch (std::exception& e) {
         LogPrintf("ThreadStakeMinter() exception %s\n", e.what());

@@ -1,6 +1,6 @@
 [Protocol]
-exec=xsn-qt '%u'
-protocol=xsn
+exec=vestx-qt '%u'
+protocol=vestx
 input=none
 output=none
 helper=true

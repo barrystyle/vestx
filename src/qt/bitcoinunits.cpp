@@ -18,9 +18,9 @@ BitcoinUnits::BitcoinUnits(QObject *parent):
 QList<BitcoinUnits::Unit> BitcoinUnits::availableUnits()
 {
     QList<BitcoinUnits::Unit> unitlist;
-    unitlist.append(XSN);
-    unitlist.append(mXSN);
-    unitlist.append(uXSN);
+    unitlist.append(VESTX);
+    unitlist.append(mVESTX);
+    unitlist.append(uVESTX);
     // unitlist.append(duffs);
     return unitlist;
 }
@@ -29,9 +29,9 @@ bool BitcoinUnits::valid(int unit)
 {
     switch(unit)
     {
-    case XSN:
-    case mXSN:
-    case uXSN:
+    case VESTX:
+    case mVESTX:
+    case uVESTX:
     case duffs:
         return true;
     default:
@@ -43,9 +43,9 @@ QString BitcoinUnits::longName(int unit)
 {
     switch(unit)
     {
-    case XSN: return QString("XSN");
-    case mXSN: return QString("mXSN");
-    case uXSN: return QString::fromUtf8("µXSN");
+    case VESTX: return QString("VESTX");
+    case mVESTX: return QString("mVESTX");
+    case uVESTX: return QString::fromUtf8("µVESTX");
     case duffs: return QString("duffs");
     default: return QString("???");
     }
@@ -55,7 +55,7 @@ QString BitcoinUnits::shortName(int unit)
 {
     switch(unit)
     {
-    case uXSN: return QString::fromUtf8("µXSN");
+    case uVESTX: return QString::fromUtf8("µVESTX");
     case duffs: return QString("duffs");
     default: return longName(unit);
     }
@@ -65,10 +65,10 @@ QString BitcoinUnits::description(int unit)
 {
     switch(unit)
     {
-    case XSN: return QString("XSN");
-    case mXSN: return QString("Milli-XSN (1 / 1" THIN_SP_UTF8 "000)");
-    case uXSN: return QString("Micro-XSN (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-    case duffs: return QString("Ten Nano-XSN (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case VESTX: return QString("VESTX");
+    case mVESTX: return QString("Milli-VESTX (1 / 1" THIN_SP_UTF8 "000)");
+    case uVESTX: return QString("Micro-VESTX (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case duffs: return QString("Ten Nano-VESTX (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
     default: return QString("???");
     }
 }
@@ -77,9 +77,9 @@ qint64 BitcoinUnits::factor(int unit)
 {
     switch(unit)
     {
-    case XSN: return 100000000;
-    case mXSN: return 100000;
-    case uXSN: return 100;
+    case VESTX: return 100000000;
+    case mVESTX: return 100000;
+    case uVESTX: return 100;
     case duffs: return 1;
     default: return 100000000;
     }
@@ -89,9 +89,9 @@ int BitcoinUnits::decimals(int unit)
 {
     switch(unit)
     {
-    case XSN: return 8;
-    case mXSN: return 5;
-    case uXSN: return 2;
+    case VESTX: return 8;
+    case mVESTX: return 5;
+    case uVESTX: return 2;
     case duffs: return 0;
     default: return 0;
     }

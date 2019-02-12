@@ -11,7 +11,7 @@
   </array>
 
   <key>CFBundleIconFile</key>
-  <string>xsn.icns</string>
+  <string>vestx.icns</string>
 
   <key>CFBundlePackageType</key>
   <string>APPL</string>
@@ -29,16 +29,16 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>XSN-Qt</string>
+  <string>VESTX-Qt</string>
   
   <key>CFBundleName</key>
-  <string>XSN-Qt</string>
+  <string>VESTX-Qt</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.xsn.XSN-Qt</string>
+  <string>org.vestx.VESTX-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>
@@ -46,10 +46,10 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>org.xsn.XSNPayment</string>
+      <string>org.vestx.VESTXPayment</string>
       <key>CFBundleURLSchemes</key>
       <array>
-        <string>xsn</string>
+        <string>vestx</string>
       </array>
     </dict>
   </array>
@@ -58,9 +58,9 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>org.xsn.paymentrequest</string>
+      <string>org.vestx.paymentrequest</string>
       <key>UTTypeDescription</key>
-      <string>XSN payment request</string>
+      <string>VESTX payment request</string>
       <key>UTTypeConformsTo</key>
       <array>
         <string>public.data</string>
@@ -68,10 +68,10 @@
       <key>UTTypeTagSpecification</key>
       <dict>
         <key>public.mime-type</key>
-        <string>application/x-xsn-payment-request</string>
+        <string>application/x-vestx-payment-request</string>
         <key>public.filename-extension</key>
         <array>
-          <string>xsnpaymentrequest</string>
+          <string>vestxpaymentrequest</string>
         </array>
       </dict>
     </dict>
@@ -84,7 +84,7 @@
       <string>Editor</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>org.xsn.paymentrequest</string>
+        <string>org.vestx.paymentrequest</string>
       </array>
       <key>LSHandlerRank</key>
       <string>Owner</string>
