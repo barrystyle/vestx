@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_BITCOINUNITS_H
-#define BITCOIN_QT_BITCOINUNITS_H
+#ifndef FXTC_QT_BITCOINUNITS_H
+#define FXTC_QT_BITCOINUNITS_H
 
 #include <amount.h>
 
@@ -56,10 +56,10 @@ public:
      */
     enum Unit
     {
-        VESTX,
-        mVESTX,
-        uVESTX,
-        duffs
+        BTC,
+        mBTC,
+        uBTC,
+        SAT
     };
 
     enum SeparatorStyle
@@ -93,10 +93,7 @@ public:
     static QString formatWithUnit(int unit, const CAmount& amount, bool plussign=false, SeparatorStyle separators=separatorStandard);
     //! Format as HTML string (with unit)
     static QString formatHtmlWithUnit(int unit, const CAmount& amount, bool plussign=false, SeparatorStyle separators=separatorStandard);
-//    //! Format as string (with unit) but floor value up to "digits" settings
-//    static QString floorWithUnit(int unit, const CAmount& amount, bool plussign=false, SeparatorStyle separators=separatorStandard);
-//    static QString floorHtmlWithUnit(int unit, const CAmount& amount, bool plussign=false, SeparatorStyle separators=separatorStandard);
-//    //! Parse string to coin amount
+    //! Parse string to coin amount
     static bool parse(int unit, const QString &value, CAmount *val_out);
     //! Gets title for amount column including current display unit if optionsModel reference available */
     static QString getAmountColumnTitle(int unit);
@@ -131,4 +128,4 @@ private:
 };
 typedef BitcoinUnits::Unit BitcoinUnit;
 
-#endif // BITCOIN_QT_BITCOINUNITS_H
+#endif // FXTC_QT_BITCOINUNITS_H

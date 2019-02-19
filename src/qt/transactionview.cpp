@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -53,12 +53,12 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
         hlayout->setSpacing(0);
         hlayout->addSpacing(23);
     }
-    QString theme = GUIUtil::getThemeName();
+
     watchOnlyWidget = new QComboBox(this);
     watchOnlyWidget->setFixedWidth(24);
     watchOnlyWidget->addItem("", TransactionFilterProxy::WatchOnlyFilter_All);
-    watchOnlyWidget->addItem(platformStyle->SingleColorIcon(":/icons/" + theme + "/eye_plus"), "", TransactionFilterProxy::WatchOnlyFilter_Yes);
-    watchOnlyWidget->addItem(platformStyle->SingleColorIcon(":/icons/" + theme + "/eye_minus"), "", TransactionFilterProxy::WatchOnlyFilter_No);
+    watchOnlyWidget->addItem(platformStyle->SingleColorIcon(":/icons/eye_plus"), "", TransactionFilterProxy::WatchOnlyFilter_Yes);
+    watchOnlyWidget->addItem(platformStyle->SingleColorIcon(":/icons/eye_minus"), "", TransactionFilterProxy::WatchOnlyFilter_No);
     hlayout->addWidget(watchOnlyWidget);
 
     dateWidget = new QComboBox(this);
@@ -90,24 +90,16 @@ TransactionView::TransactionView(const PlatformStyle *platformStyle, QWidget *pa
                                   TransactionFilterProxy::TYPE(TransactionRecord::SendToOther));
     typeWidget->addItem(tr("To yourself"), TransactionFilterProxy::TYPE(TransactionRecord::SendToSelf));
     typeWidget->addItem(tr("Mined"), TransactionFilterProxy::TYPE(TransactionRecord::Generated));
-    typeWidget->addItem(tr("Minted"), TransactionFilterProxy::TYPE(TransactionRecord::StakeMint));
-    typeWidget->addItem(tr("Minted(TPoS)"), TransactionFilterProxy::TYPE(TransactionRecord::StakeMintTPoS));
-    typeWidget->addItem(tr("Minted(TPoS Commission)"), TransactionFilterProxy::TYPE(TransactionRecord::StakeMintTPoSCommission));
-    typeWidget->addItem(tr("Masternode Reward"), TransactionFilterProxy::TYPE(TransactionRecord::MNReward));
     typeWidget->addItem(tr("Other"), TransactionFilterProxy::TYPE(TransactionRecord::Other));
 
     hlayout->addWidget(typeWidget);
 
     search_widget = new QLineEdit(this);
-#if QT_VERSION >= 0x040700
     search_widget->setPlaceholderText(tr("Enter address, transaction id, or label to search"));
-#endif
     hlayout->addWidget(search_widget);
 
     amountWidget = new QLineEdit(this);
-#if QT_VERSION >= 0x040700
     amountWidget->setPlaceholderText(tr("Min amount"));
-#endif
     if (platformStyle->getUseExtraSpacing()) {
         amountWidget->setFixedWidth(97);
     } else {

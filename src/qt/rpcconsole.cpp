@@ -1,4 +1,6 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -40,10 +42,6 @@
 #include <QTimer>
 #include <QStringList>
 
-#if QT_VERSION < 0x050000
-#include <QUrl>
-#endif
-
 // TODO: add a scrollback limit, as there is currently none
 // TODO: make it possible to filter out categories (esp debug messages when implemented)
 // TODO: receive errors and debug messages through ClientModel
@@ -53,25 +51,14 @@ const int INITIAL_TRAFFIC_GRAPH_MINS = 30;
 const QSize FONT_RANGE(4, 40);
 const char fontSizeSettingsKey[] = "consoleFontSize";
 
-
-// Repair parameters
-const QString SALVAGEWALLET("-salvagewallet");
-const QString RESCAN("-rescan");
-const QString ZAPTXES1("-zapwallettxes=1");
-const QString ZAPTXES2("-zapwallettxes=2");
-const QString UPGRADEWALLET("-upgradewallet");
-const QString REINDEX("-reindex");
-const QString CLEARMNCACHE("-clearmncache");
-
-
 const struct {
     const char *url;
     const char *source;
 } ICON_MAPPING[] = {
-    {"cmd-request", "tx_input"},
-    {"cmd-reply", "tx_output"},
-    {"cmd-error", "tx_output"},
-    {"misc", "tx_inout"},
+    {"cmd-request", ":/icons/tx_input"},
+    {"cmd-reply", ":/icons/tx_output"},
+    {"cmd-error", ":/icons/tx_output"},
+    {"misc", ":/icons/tx_inout"},
     {nullptr, nullptr}
 };
 
@@ -471,8 +458,6 @@ RPCConsole::RPCConsole(interfaces::Node& node, const PlatformStyle *_platformSty
 {
     ui->setupUi(this);
     QSettings settings;
-    QString theme = GUIUtil::getThemeName();
-
     if (!restoreGeometry(settings.value("RPCConsoleWindowGeometry").toByteArray())) {
         // Restore failed (perhaps missing setting), center the window
         move(QApplication::desktop()->availableGeometry().center() - frameGeometry().center());
@@ -481,11 +466,11 @@ RPCConsole::RPCConsole(interfaces::Node& node, const PlatformStyle *_platformSty
     ui->openDebugLogfileButton->setToolTip(ui->openDebugLogfileButton->toolTip().arg(tr(PACKAGE_NAME)));
 
     if (platformStyle->getImagesOnButtons()) {
-        ui->openDebugLogfileButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/export"));
+        ui->openDebugLogfileButton->setIcon(platformStyle->SingleColorIcon(":/icons/export"));
     }
-    ui->clearButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/remove"));
-    ui->fontBiggerButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/fontbigger"));
-    ui->fontSmallerButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/fontsmaller"));
+    ui->clearButton->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
+    ui->fontBiggerButton->setIcon(platformStyle->SingleColorIcon(":/icons/fontbigger"));
+    ui->fontSmallerButton->setIcon(platformStyle->SingleColorIcon(":/icons/fontsmaller"));
 
     // Install event filter for up and down arrow
     ui->lineEdit->installEventFilter(this);
@@ -495,21 +480,6 @@ RPCConsole::RPCConsole(interfaces::Node& node, const PlatformStyle *_platformSty
     connect(ui->fontBiggerButton, SIGNAL(clicked()), this, SLOT(fontBigger()));
     connect(ui->fontSmallerButton, SIGNAL(clicked()), this, SLOT(fontSmaller()));
     connect(ui->btnClearTrafficGraph, SIGNAL(clicked()), ui->trafficGraph, SLOT(clear()));
-
-
-
-
-    // Wallet Repair Buttons
-    // connect(ui->btn_salvagewallet, SIGNAL(clicked()), this, SLOT(walletSalvage()));
-    // Disable salvage option in GUI, it's way too powerful and can lead to funds loss
-    ui->btn_salvagewallet->setEnabled(false);
-    connect(ui->btn_rescan, SIGNAL(clicked()), this, SLOT(walletRescan()));
-    connect(ui->btn_zapwallettxes1, SIGNAL(clicked()), this, SLOT(walletZaptxes1()));
-    connect(ui->btn_zapwallettxes2, SIGNAL(clicked()), this, SLOT(walletZaptxes2()));
-    connect(ui->btn_upgradewallet, SIGNAL(clicked()), this, SLOT(walletUpgrade()));
-    connect(ui->btn_reindex, SIGNAL(clicked()), this, SLOT(walletReindex()));
-    connect(ui->btn_flashmncache, SIGNAL(clicked()), this, SLOT(walletClearMNCache()));
-
 
     // disable the wallet selector by default
     ui->WalletSelector->setVisible(false);
@@ -606,11 +576,10 @@ void RPCConsole::setClientModel(ClientModel *model)
         updateNetworkState();
         connect(model, SIGNAL(networkActiveChanged(bool)), this, SLOT(setNetworkActive(bool)));
 
+        // Dash
         setMasternodeCount(model->getMasternodeCountString());
         connect(model, SIGNAL(strMasternodesChanged(QString)), this, SLOT(setMasternodeCount(QString)));
-
-        setMerchantnodeCount(model->getMerchantnodeCountString());
-        connect(model, SIGNAL(strMerchantnodesChanged(QString)), this, SLOT(setMerchantnodeCount(QString)));
+        //
 
         updateTrafficStats(node.getTotalBytesRecv(), node.getTotalBytesSent());
         connect(model, SIGNAL(bytesChanged(quint64,quint64)), this, SLOT(updateTrafficStats(quint64, quint64)));
@@ -701,7 +670,6 @@ void RPCConsole::setClientModel(ClientModel *model)
         // Provide initial values
         ui->clientVersion->setText(model->formatFullVersion());
         ui->clientUserAgent->setText(model->formatSubVersion());
-        ui->clientName->setText(model->clientName());
         ui->dataDir->setText(model->dataDir());
         ui->startupTime->setText(model->formatClientStartupTime());
         ui->networkName->setText(QString::fromStdString(Params().NetworkIDString()));
@@ -746,6 +714,16 @@ void RPCConsole::addWallet(WalletModel * const walletModel)
     if (ui->WalletSelector->count() > 2) {
         ui->WalletSelector->setVisible(true);
         ui->WalletSelectorLabel->setVisible(true);
+    }
+}
+
+void RPCConsole::removeWallet(WalletModel * const walletModel)
+{
+    const QString name = walletModel->getWalletName();
+    ui->WalletSelector->removeItem(ui->WalletSelector->findData(name));
+    if (ui->WalletSelector->count() == 2) {
+        ui->WalletSelector->setVisible(false);
+        ui->WalletSelectorLabel->setVisible(false);
     }
 }
 #endif
@@ -796,49 +774,6 @@ void RPCConsole::setFontSize(int newSize)
     ui->messagesWidget->verticalScrollBar()->setValue(oldPosFactor * ui->messagesWidget->verticalScrollBar()->maximum());
 }
 
-/** Restart wallet with "-salvagewallet" */
-void RPCConsole::walletSalvage()
-{
-    buildParameterlist(SALVAGEWALLET);
-}
-
-/** Restart wallet with "-rescan" */
-void RPCConsole::walletRescan()
-{
-    buildParameterlist(RESCAN);
-}
-
-/** Restart wallet with "-zapwallettxes=1" */
-void RPCConsole::walletZaptxes1()
-{
-    buildParameterlist(ZAPTXES1);
-}
-
-/** Restart wallet with "-zapwallettxes=2" */
-void RPCConsole::walletZaptxes2()
-{
-    buildParameterlist(ZAPTXES2);
-}
-
-/** Restart wallet with "-upgradewallet" */
-void RPCConsole::walletUpgrade()
-{
-    buildParameterlist(UPGRADEWALLET);
-}
-
-/** Restart wallet with "-reindex" */
-void RPCConsole::walletReindex()
-{
-    buildParameterlist(REINDEX);
-}
-
-/** Restart wallet with "-clearmncache" */
-void RPCConsole::walletClearMNCache()
-{
-    buildParameterlist(CLEARMNCACHE);
-}
-
-
 void RPCConsole::clear(bool clearHistory)
 {
     ui->messagesWidget->clear();
@@ -851,17 +786,13 @@ void RPCConsole::clear(bool clearHistory)
     ui->lineEdit->setFocus();
 
     // Add smoothly scaled icon images.
-    // (when using width/height on an img, Qt uses nearest instead of linear interpolation)    
-    QString iconPath = ":/icons/" + GUIUtil::getThemeName() + "/";
-    QString iconName = "";
-
+    // (when using width/height on an img, Qt uses nearest instead of linear interpolation)
     for(int i=0; ICON_MAPPING[i].url; ++i)
     {
-        iconName = ICON_MAPPING[i].source;
         ui->messagesWidget->document()->addResource(
                     QTextDocument::ImageResource,
                     QUrl(ICON_MAPPING[i].url),
-                    platformStyle->SingleColorImage(iconPath + iconName).scaled(QSize(consoleFontSize*2, consoleFontSize*2), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+                    platformStyle->SingleColorImage(ICON_MAPPING[i].source).scaled(QSize(consoleFontSize*2, consoleFontSize*2), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
     }
 
     // Set default style sheet
@@ -944,16 +875,6 @@ void RPCConsole::setNetworkActive(bool networkActive)
     updateNetworkState();
 }
 
-void RPCConsole::setMasternodeCount(const QString &strMasternodes)
-{
-    ui->masternodeCount->setText(strMasternodes);
-}
-
-void RPCConsole::setMerchantnodeCount(const QString &strMerchantnodes)
-{
-    ui->merchantnodeCount->setText(strMerchantnodes);
-}
-
 void RPCConsole::setNumBlocks(int count, const QDateTime& blockDate, double nVerificationProgress, bool headers)
 {
     if (!headers) {
@@ -961,6 +882,13 @@ void RPCConsole::setNumBlocks(int count, const QDateTime& blockDate, double nVer
         ui->lastBlockTime->setText(blockDate.toString());
     }
 }
+
+// Dash
+void RPCConsole::setMasternodeCount(const QString &strMasternodes)
+{
+    ui->masternodeCount->setText(strMasternodes);
+}
+//
 
 void RPCConsole::setMempoolSize(long numberOfTxs, size_t dynUsage)
 {
@@ -1103,28 +1031,6 @@ void RPCConsole::setTrafficGraphRange(int mins)
 {
     ui->trafficGraph->setGraphRangeMins(mins);
     ui->lblGraphRange->setText(GUIUtil::formatDurationStr(mins * 60));
-}
-
-void RPCConsole::buildParameterlist(QString arg)
-{
-    // Get command-line arguments and remove the application name
-    QStringList args = QApplication::arguments();
-    args.removeFirst();
-
-    // Remove existing repair-options
-    args.removeAll(SALVAGEWALLET);
-    args.removeAll(RESCAN);
-    args.removeAll(ZAPTXES1);
-    args.removeAll(ZAPTXES2);
-    args.removeAll(UPGRADEWALLET);
-    args.removeAll(REINDEX);
-    args.removeAll(CLEARMNCACHE);
-
-    // Append repair parameter to command line.
-    args.append(arg);
-
-    // Send command-line arguments to BitcoinGUI::handleRestart()
-    Q_EMIT handleRestart(args);
 }
 
 void RPCConsole::updateTrafficStats(quint64 totalBytesIn, quint64 totalBytesOut)

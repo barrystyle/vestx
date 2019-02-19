@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -23,14 +23,13 @@
 #include <QTextDocument>
 
 ReceiveCoinsDialog::ReceiveCoinsDialog(const PlatformStyle *_platformStyle, QWidget *parent) :
-    QWidget(parent),
+    QDialog(parent),
     ui(new Ui::ReceiveCoinsDialog),
     columnResizingFixer(0),
     model(0),
     platformStyle(_platformStyle)
 {
     ui->setupUi(this);
-    QString theme = GUIUtil::getThemeName();
 
     if (!_platformStyle->getImagesOnButtons()) {
         ui->clearButton->setIcon(QIcon());
@@ -38,10 +37,10 @@ ReceiveCoinsDialog::ReceiveCoinsDialog(const PlatformStyle *_platformStyle, QWid
         ui->showRequestButton->setIcon(QIcon());
         ui->removeRequestButton->setIcon(QIcon());
     } else {
-        ui->clearButton->setIcon(_platformStyle->SingleColorIcon(":/icons/" + theme + "/remove"));
-        ui->receiveButton->setIcon(_platformStyle->SingleColorIcon(":/icons/" + theme + "/receiving_addresses"));
-        ui->showRequestButton->setIcon(_platformStyle->SingleColorIcon(":/icons/" + theme + "/edit"));
-        ui->removeRequestButton->setIcon(_platformStyle->SingleColorIcon(":/icons/" + theme + "/remove"));
+        ui->clearButton->setIcon(_platformStyle->SingleColorIcon(":/icons/remove"));
+        ui->receiveButton->setIcon(_platformStyle->SingleColorIcon(":/icons/receiving_addresses"));
+        ui->showRequestButton->setIcon(_platformStyle->SingleColorIcon(":/icons/edit"));
+        ui->removeRequestButton->setIcon(_platformStyle->SingleColorIcon(":/icons/remove"));
     }
 
     // context menu actions
@@ -100,22 +99,15 @@ void ReceiveCoinsDialog::setModel(WalletModel *_model)
         } else {
             ui->useBech32->setCheckState(Qt::Unchecked);
         }
-    }
 
-    onThemeChanged();
+        // eventually disable the main receive button if private key operations are disabled
+        // ui->receiveButton->setEnabled(!model->privateKeysDisabled());
+    }
 }
 
 ReceiveCoinsDialog::~ReceiveCoinsDialog()
 {
     delete ui;
-}
-
-void ReceiveCoinsDialog::onThemeChanged()
-{
-    auto themeName = GUIUtil::getThemeName();
-    ui->label_8->setPixmap(QPixmap(
-                             QString(
-                                 ":/images/res/images/pages/receive/%1/receive-header.png").arg(themeName)));
 }
 
 void ReceiveCoinsDialog::clear()
@@ -237,7 +229,7 @@ void ReceiveCoinsDialog::keyPressEvent(QKeyEvent *event)
         }
     }
 
-    this->QWidget::keyPressEvent(event);
+    this->QDialog::keyPressEvent(event);
 }
 
 QModelIndex ReceiveCoinsDialog::selectedRow()

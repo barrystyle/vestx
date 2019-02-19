@@ -1,9 +1,10 @@
-// Copyright (c) 2011-2016 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_GUICONSTANTS_H
-#define BITCOIN_QT_GUICONSTANTS_H
+#ifndef FXTC_QT_GUICONSTANTS_H
+#define FXTC_QT_GUICONSTANTS_H
 
 /* Milliseconds between model updates */
 static const int MODEL_UPDATE_DELAY = 250;
@@ -27,8 +28,6 @@ static const bool DEFAULT_SPLASHSCREEN = true;
 #define COLOR_BAREADDRESS QColor(140, 140, 140)
 /* Transaction list -- TX status decoration - open until date */
 #define COLOR_TX_STATUS_OPENUNTILDATE QColor(64, 64, 255)
-/* Transaction list -- TX status decoration - offline */
-#define COLOR_TX_STATUS_OFFLINE QColor(192, 192, 192)
 /* Transaction list -- TX status decoration - danger, tx needs attention */
 #define COLOR_TX_STATUS_DANGER QColor(200, 100, 100)
 /* Transaction list -- TX status decoration - default color */
@@ -49,8 +48,9 @@ static const int MAX_URI_LENGTH = 255;
 #define SPINNER_FRAMES 36
 
 #define QAPP_ORG_NAME "VESTX"
-#define QAPP_ORG_DOMAIN "vestx.org"
+#define QAPP_ORG_DOMAIN "fixedtradecoin.org"
 #define QAPP_APP_NAME_DEFAULT "VESTX-Qt"
 #define QAPP_APP_NAME_TESTNET "VESTX-Qt-testnet"
+#define QAPP_APP_NAME_REGTEST "VESTX-Qt-regtest"
 
-#endif // BITCOIN_QT_GUICONSTANTS_H
+#endif // FXTC_QT_GUICONSTANTS_H

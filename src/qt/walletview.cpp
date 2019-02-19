@@ -1,4 +1,6 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,6 +11,9 @@
 #include <qt/bitcoingui.h>
 #include <qt/clientmodel.h>
 #include <qt/guiutil.h>
+// Dash
+#include <masternodeconfig.h>
+//
 #include <qt/optionsmodel.h>
 #include <qt/overviewpage.h>
 #include <qt/platformstyle.h>
@@ -18,8 +23,6 @@
 #include <qt/transactiontablemodel.h>
 #include <qt/transactionview.h>
 #include <qt/walletmodel.h>
-#include <qt/transactionsdialog.h>
-#include <qt/tpospage.h>
 
 #include <interfaces/node.h>
 #include <ui_interface.h>
@@ -30,8 +33,8 @@
 #include <QHBoxLayout>
 #include <QProgressDialog>
 #include <QPushButton>
-#include <QVBoxLayout>
 #include <QSettings>
+#include <QVBoxLayout>
 
 WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     QStackedWidget(parent),
@@ -45,14 +48,12 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
     QHBoxLayout *hbox_buttons = new QHBoxLayout();
-    transactionsDialog = new TransactionsDialog(platformStyle, this);
-    transactionView = transactionsDialog->transactionView();
-    vbox->addWidget(transactionsDialog);
+    transactionView = new TransactionView(platformStyle, this);
+    vbox->addWidget(transactionView);
     QPushButton *exportButton = new QPushButton(tr("&Export"), this);
     exportButton->setToolTip(tr("Export the data in the current tab to a file"));
     if (platformStyle->getImagesOnButtons()) {
-        QString theme = GUIUtil::getThemeName();
-        exportButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/export"));
+        exportButton->setIcon(platformStyle->SingleColorIcon(":/icons/export"));
     }
     hbox_buttons->addStretch();
     hbox_buttons->addWidget(exportButton);
@@ -61,7 +62,6 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
 
     receiveCoinsPage = new ReceiveCoinsDialog(platformStyle);
     sendCoinsPage = new SendCoinsDialog(platformStyle);
-    tposPage = new TPoSPage(this);
 
     usedSendingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::SendingTab, this);
     usedReceivingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::ReceivingTab, this);
@@ -70,14 +70,14 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     addWidget(transactionsPage);
     addWidget(receiveCoinsPage);
     addWidget(sendCoinsPage);
-    addWidget(tposPage);
 
+    // Dash
     QSettings settings;
     if (settings.value("fShowMasternodesTab").toBool()) {
         masternodeListPage = new MasternodeList(platformStyle);
         addWidget(masternodeListPage);
     }
-
+    //
 
     // Clicking on a transaction on the overview pre-selects the transaction on the transaction history page
     connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), transactionView, SLOT(focusTransaction(QModelIndex)));
@@ -132,10 +132,13 @@ void WalletView::setClientModel(ClientModel *_clientModel)
 
     overviewPage->setClientModel(_clientModel);
     sendCoinsPage->setClientModel(_clientModel);
+
+    // Dash
     QSettings settings;
     if (settings.value("fShowMasternodesTab").toBool()) {
         masternodeListPage->setClientModel(clientModel);
     }
+    //
 }
 
 void WalletView::setWalletModel(WalletModel *_walletModel)
@@ -145,13 +148,16 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
     // Put transaction list in tabs
     transactionView->setModel(_walletModel);
     overviewPage->setWalletModel(_walletModel);
-    receiveCoinsPage->setModel(_walletModel);
-    sendCoinsPage->setModel(_walletModel);
-    tposPage->setWalletModel(_walletModel);
+
+    // Dash
     QSettings settings;
     if (settings.value("fShowMasternodesTab").toBool()) {
         masternodeListPage->setWalletModel(walletModel);
     }
+    //
+
+    receiveCoinsPage->setModel(_walletModel);
+    sendCoinsPage->setModel(_walletModel);
     usedReceivingAddressesPage->setModel(_walletModel ? _walletModel->getAddressTableModel() : nullptr);
     usedSendingAddressesPage->setModel(_walletModel ? _walletModel->getAddressTableModel() : nullptr);
 
@@ -172,7 +178,7 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
                 this, SLOT(processNewTransaction(QModelIndex,int,int)));
 
         // Ask for passphrase if needed
-        connect(_walletModel, SIGNAL(requireUnlock()), this, SLOT(unlockWallet()));
+        connect(_walletModel, SIGNAL(requireUnlock(bool)), this, SLOT(unlockWallet(bool)));
 
         // Show progress dialog
         connect(_walletModel, SIGNAL(showProgress(QString,int)), this, SLOT(showProgress(QString,int)));
@@ -209,6 +215,16 @@ void WalletView::gotoHistoryPage()
     setCurrentWidget(transactionsPage);
 }
 
+// Dash
+void WalletView::gotoMasternodePage()
+{
+    QSettings settings;
+    if (settings.value("fShowMasternodesTab").toBool()) {
+        setCurrentWidget(masternodeListPage);
+    }
+}
+//
+
 void WalletView::gotoReceiveCoinsPage()
 {
     setCurrentWidget(receiveCoinsPage);
@@ -220,20 +236,6 @@ void WalletView::gotoSendCoinsPage(QString addr)
 
     if (!addr.isEmpty())
         sendCoinsPage->setAddress(addr);
-}
-
-void WalletView::gotoMasternodePage()
-{
-    QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        setCurrentWidget(masternodeListPage);
-    }
-}
-
-void WalletView::gotoTPoSPage()
-{
-    setCurrentWidget(tposPage);
-    tposPage->refresh();
 }
 
 void WalletView::gotoSignMessageTab(QString addr)
@@ -289,19 +291,19 @@ void WalletView::encryptWallet(bool status)
 void WalletView::backupWallet()
 {
     QString filename = GUIUtil::getSaveFileName(this,
-                                                tr("Backup Wallet"), QString(),
-                                                tr("Wallet Data (*.dat)"), nullptr);
+        tr("Backup Wallet"), QString(),
+        tr("Wallet Data (*.dat)"), nullptr);
 
     if (filename.isEmpty())
         return;
 
     if (!walletModel->wallet().backupWallet(filename.toLocal8Bit().data())) {
         Q_EMIT message(tr("Backup Failed"), tr("There was an error trying to save the wallet data to %1.").arg(filename),
-                       CClientUIInterface::MSG_ERROR);
-    }
+            CClientUIInterface::MSG_ERROR);
+        }
     else {
         Q_EMIT message(tr("Backup Successful"), tr("The wallet data was successfully saved to %1.").arg(filename),
-                       CClientUIInterface::MSG_INFORMATION);
+            CClientUIInterface::MSG_INFORMATION);
     }
 }
 
@@ -312,19 +314,24 @@ void WalletView::changePassphrase()
     dlg.exec();
 }
 
-void WalletView::unlockWallet()
+void WalletView::unlockWallet(bool fForMixingOnly)
 {
     if(!walletModel)
         return;
     // Unlock wallet when requested by wallet model
-    if (walletModel->getEncryptionStatus() == WalletModel::Locked || walletModel->getEncryptionStatus() == WalletModel::UnlockedForStakingOnly)
+    // Dash
+    //if (walletModel->getEncryptionStatus() == WalletModel::Locked)
+    if (walletModel->getEncryptionStatus() == WalletModel::Locked || walletModel->getEncryptionStatus() == WalletModel::UnlockedForMixingOnly)
     {
-        AskPassphraseDialog dlg(AskPassphraseDialog::UnlockStaking, this);
+        //AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this);
+        AskPassphraseDialog dlg(fForMixingOnly ? AskPassphraseDialog::UnlockMixing : AskPassphraseDialog::Unlock, this);
+    //
         dlg.setModel(walletModel);
         dlg.exec();
     }
 }
 
+// Dash
 void WalletView::lockWallet()
 {
     if(!walletModel)
@@ -332,15 +339,14 @@ void WalletView::lockWallet()
 
     walletModel->setWalletLocked(true);
 }
+//
 
 void WalletView::usedSendingAddresses()
 {
     if(!walletModel)
         return;
 
-    usedSendingAddressesPage->show();
-    usedSendingAddressesPage->raise();
-    usedSendingAddressesPage->activateWindow();
+    GUIUtil::bringToFront(usedSendingAddressesPage);
 }
 
 void WalletView::usedReceivingAddresses()
@@ -348,9 +354,7 @@ void WalletView::usedReceivingAddresses()
     if(!walletModel)
         return;
 
-    usedReceivingAddressesPage->show();
-    usedReceivingAddressesPage->raise();
-    usedReceivingAddressesPage->activateWindow();
+    GUIUtil::bringToFront(usedReceivingAddressesPage);
 }
 
 void WalletView::showProgress(const QString &title, int nProgress)

@@ -1,12 +1,17 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_WALLETVIEW_H
-#define BITCOIN_QT_WALLETVIEW_H
+#ifndef FXTC_QT_WALLETVIEW_H
+#define FXTC_QT_WALLETVIEW_H
 
 #include <amount.h>
-#include <masternodelist.h>
+
+// Dash
+#include <qt/masternodelist.h>
+//
 
 #include <QStackedWidget>
 
@@ -20,8 +25,6 @@ class SendCoinsRecipient;
 class TransactionView;
 class WalletModel;
 class AddressBookPage;
-class TPoSPage;
-class TransactionsDialog;
 
 QT_BEGIN_NAMESPACE
 class QModelIndex;
@@ -68,11 +71,11 @@ private:
     SendCoinsDialog *sendCoinsPage;
     AddressBookPage *usedSendingAddressesPage;
     AddressBookPage *usedReceivingAddressesPage;
+
+    // Dash
     MasternodeList *masternodeListPage;
-    TPoSPage* tposPage;
+    //
 
-
-    TransactionsDialog* transactionsDialog;
     TransactionView *transactionView;
 
     QProgressDialog *progressDialog;
@@ -83,16 +86,16 @@ public Q_SLOTS:
     void gotoOverviewPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
+
+    // Dash
+    /** Switch to masternode page */
+    void gotoMasternodePage();
+    //
+
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
     void gotoSendCoinsPage(QString addr = "");
-    /** Switch to masternode page */
-    void gotoMasternodePage();
-    /** Switch to tpos page */
-    void gotoTPoSPage();
-
-
 
     /** Show Sign/Verify Message dialog and switch to sign message tab */
     void gotoSignMessageTab(QString addr = "");
@@ -111,9 +114,11 @@ public Q_SLOTS:
     /** Change encrypted wallet passphrase */
     void changePassphrase();
     /** Ask for passphrase to unlock wallet temporarily */
-    void unlockWallet();
+    void unlockWallet(bool fAnonymizeOnly=false);
+    // Dash
     /** Lock wallet */
     void lockWallet();
+    //
 
     /** Show used sending addresses */
     void usedSendingAddresses();
@@ -144,4 +149,4 @@ Q_SIGNALS:
     void outOfSyncWarningClicked();
 };
 
-#endif // BITCOIN_QT_WALLETVIEW_H
+#endif // FXTC_QT_WALLETVIEW_H

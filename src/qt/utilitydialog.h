@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_UTILITYDIALOG_H
-#define BITCOIN_QT_UTILITYDIALOG_H
+#ifndef FXTC_QT_UTILITYDIALOG_H
+#define FXTC_QT_UTILITYDIALOG_H
 
 #include <QDialog>
 #include <QObject>
@@ -22,13 +22,6 @@ namespace Ui {
 class HelpMessageDialog : public QDialog
 {
     Q_OBJECT
-
-public:
-    enum HelpMode {
-        cmdline,
-        about,
-        pshelp
-    };
 
 public:
     explicit HelpMessageDialog(interfaces::Node& node, QWidget *parent, bool about);
@@ -59,4 +52,4 @@ protected:
     void closeEvent(QCloseEvent *event);
 };
 
-#endif // BITCOIN_QT_UTILITYDIALOG_H
+#endif // FXTC_QT_UTILITYDIALOG_H

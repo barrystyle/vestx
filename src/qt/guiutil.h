@@ -1,15 +1,18 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_GUIUTIL_H
-#define BITCOIN_QT_GUIUTIL_H
+#ifndef FXTC_QT_GUIUTIL_H
+#define FXTC_QT_GUIUTIL_H
 
 #include <amount.h>
 #include <fs.h>
 
 #include <QEvent>
 #include <QHeaderView>
+#include <QItemDelegate>
 #include <QMessageBox>
 #include <QObject>
 #include <QProgressBar>
@@ -48,7 +51,7 @@ namespace GUIUtil
     // Set up widget for address
     void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent);
 
-    // Parse "vestx:" URI into recipient object, return true on successful parsing
+    // Parse "bitcoin:" URI into recipient object, return true on successful parsing
     bool parseBitcoinURI(const QUrl &uri, SendCoinsRecipient *out);
     bool parseBitcoinURI(QString uri, SendCoinsRecipient *out);
     QString formatBitcoinURI(const SendCoinsRecipient &info);
@@ -114,24 +117,19 @@ namespace GUIUtil
     // Determine whether a widget is hidden behind other windows
     bool isObscured(QWidget *w);
 
+    // Activate, show and raise the widget
+    void bringToFront(QWidget* w);
+
     // Open debug.log
     void openDebugLogfile();
 
     // Open the config file
     bool openBitcoinConf();
 
-    // Open vestx.conf
-    void openConfigfile();
-
+    // Dash
     // Open masternode.conf
     void openMNConfigfile();
-
-    // Browse backup folder
-    void showBackups();
-
-
-    // Replace invalid default fonts with known good ones
-    void SubstituteFonts(const QString& language);
+    //
 
     /** Qt event filter that intercepts ToolTipChange events, and replaces the tooltip with a rich text
       representation if needed. This assures that Qt can word-wrap long tooltip messages.
@@ -193,21 +191,6 @@ namespace GUIUtil
     bool GetStartOnSystemStartup();
     bool SetStartOnSystemStartup(bool fAutoStart);
 
-    /** Modify Qt network specific settings on migration */
-    void migrateQtSettings();
-
-
-    /** Save window size and position */
-    void saveWindowGeometry(const QString& strSetting, QWidget *parent);
-    /** Restore window size and position */
-    void restoreWindowGeometry(const QString& strSetting, const QSize &defaultSize, QWidget *parent);
-
-    /** Load global CSS theme */
-    QString loadStyleSheet();
-
-    /** Return name of current CSS theme */
-    QString getThemeName();
-
     /* Convert QString to OS specific boost path through UTF-8 */
     fs::path qstringToBoostPath(const QString &path);
 
@@ -244,11 +227,11 @@ namespace GUIUtil
     protected:
         void mouseReleaseEvent(QMouseEvent *event);
     };
-    
+
     class ClickableProgressBar : public QProgressBar
     {
         Q_OBJECT
-        
+
     Q_SIGNALS:
         /** Emitted when the progressbar is clicked. The relative mouse coordinates of the click are
          * passed to the signal.
@@ -258,20 +241,20 @@ namespace GUIUtil
         void mouseReleaseEvent(QMouseEvent *event);
     };
 
-#if defined(Q_OS_MAC) && QT_VERSION >= 0x050000
-    // workaround for Qt OSX Bug:
-    // https://bugreports.qt-project.org/browse/QTBUG-15631
-    // QProgressBar uses around 10% CPU even when app is in background
-    class ProgressBar : public ClickableProgressBar
-    {
-        bool event(QEvent *e) {
-            return (e->type() != QEvent::StyleAnimationUpdate) ? QProgressBar::event(e) : false;
-        }
-    };
-#else
     typedef ClickableProgressBar ProgressBar;
-#endif
 
+    class ItemDelegate : public QItemDelegate
+    {
+        Q_OBJECT
+    public:
+        ItemDelegate(QObject* parent) : QItemDelegate(parent) {}
+
+    Q_SIGNALS:
+        void keyEscapePressed();
+
+    private:
+        bool eventFilter(QObject *object, QEvent *event);
+    };
 } // namespace GUIUtil
 
-#endif // BITCOIN_QT_GUIUTIL_H
+#endif // FXTC_QT_GUIUTIL_H

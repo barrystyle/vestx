@@ -1,4 +1,5 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -30,12 +31,6 @@
 #include <QTextTable>
 #include <QTextCursor>
 #include <QVBoxLayout>
-
-static const QString DisclaimerInfo()
-{
-    static const QString result(QObject::tr("This software is experimental, use at your own risk. VESTX-core, contributing developers, and any affiliates take no responsibility for the technical functionalities or the lack thereof"));
-    return result;
-}
 
 /** "Help message" or "About" dialog box */
 HelpMessageDialog::HelpMessageDialog(interfaces::Node& node, QWidget *parent, bool about) :
@@ -71,13 +66,12 @@ HelpMessageDialog::HelpMessageDialog(interfaces::Node& node, QWidget *parent, bo
         ui->aboutMessage->setTextFormat(Qt::RichText);
         ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         text = version + "\n" + licenseInfo;
-        ui->aboutMessage->setText(version + "<br><br>" + licenseInfoHTML + "<br><br>" + DisclaimerInfo());
+        ui->aboutMessage->setText(version + "<br><br>" + licenseInfoHTML);
         ui->aboutMessage->setWordWrap(true);
         ui->helpMessage->setVisible(false);
     } else {
         setWindowTitle(tr("Command-line options"));
-        QString header = "Usage:\n"
-            "  vestx-qt [command-line options]                     \n";
+        QString header = "Usage:  vestx-qt [command-line options]                     \n";
         QTextCursor cursor(ui->helpMessage->document());
         cursor.insertText(version);
         cursor.insertBlock();
@@ -86,7 +80,7 @@ HelpMessageDialog::HelpMessageDialog(interfaces::Node& node, QWidget *parent, bo
 
         std::string strUsage = gArgs.GetHelpMessage();
         QString coreOptions = QString::fromStdString(strUsage);
-        text = version + "\n" + header + "\n" + coreOptions;
+        text = version + "\n\n" + header + "\n" + coreOptions;
 
         QTextTableFormat tf;
         tf.setBorderStyle(QTextFrameFormat::BorderStyle_None);

@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_RECEIVECOINSDIALOG_H
-#define BITCOIN_QT_RECEIVECOINSDIALOG_H
+#ifndef FXTC_QT_RECEIVECOINSDIALOG_H
+#define FXTC_QT_RECEIVECOINSDIALOG_H
 
 #include <qt/guiutil.h>
 
@@ -27,7 +27,7 @@ class QModelIndex;
 QT_END_NAMESPACE
 
 /** Dialog for requesting payment of bitcoins */
-class ReceiveCoinsDialog : public QWidget
+class ReceiveCoinsDialog : public QDialog
 {
     Q_OBJECT
 
@@ -75,7 +75,6 @@ private Q_SLOTS:
     void copyLabel();
     void copyMessage();
     void copyAmount();
-    void onThemeChanged();
 };
 
-#endif // BITCOIN_QT_RECEIVECOINSDIALOG_H
+#endif // FXTC_QT_RECEIVECOINSDIALOG_H

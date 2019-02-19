@@ -1,16 +1,22 @@
-#include "masternodelist.h"
-#include "ui_masternodelist.h"
+// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2018 FXTC developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "activemasternode.h"
-#include "clientmodel.h"
-#include "init.h"
-#include "guiutil.h"
-#include "masternode-sync.h"
-#include "masternodeconfig.h"
-#include "masternodeman.h"
-#include "sync.h"
-#include "wallet/wallet.h"
-#include "walletmodel.h"
+#include <qt/masternodelist.h>
+#include <qt/forms/ui_masternodelist.h>
+
+#include <activemasternode.h>
+#include <qt/clientmodel.h>
+#include <qt/guiutil.h>
+#include <init.h>
+#include <key_io.h>
+#include <masternode-sync.h>
+#include <masternodeconfig.h>
+#include <masternodeman.h>
+#include <sync.h>
+#include <wallet/wallet.h>
+#include <qt/walletmodel.h>
 
 #include <QTimer>
 #include <QMessageBox>
@@ -72,7 +78,6 @@ MasternodeList::MasternodeList(const PlatformStyle *platformStyle, QWidget *pare
     fFilterUpdated = false;
     nTimeFilterUpdated = GetTime();
     updateNodeList();
-    onThemeChanged();
 }
 
 MasternodeList::~MasternodeList()
@@ -105,14 +110,18 @@ void MasternodeList::StartAlias(std::string strAlias)
     std::string strStatusHtml;
     strStatusHtml += "<center>Alias: " + strAlias;
 
-    for(CMasternodeConfig::CMasternodeEntry mne : masternodeConfig.getEntries()) {
+    for (CMasternodeConfig::CMasternodeEntry mne : masternodeConfig.getEntries()) {
         if(mne.getAlias() == strAlias) {
             std::string strError;
+            CMasternodeBroadcast mnb;
 
             bool fSuccess = walletModel->wallet().startMasternode(mne.getIp(), mne.getPrivKey(), mne.getTxHash(), mne.getOutputIndex(), strError);
 
             if(fSuccess) {
                 strStatusHtml += "<br>Successfully started masternode.";
+                mnodeman.UpdateMasternodeList(mnb, *g_connman);
+                mnb.Relay(*g_connman);
+                mnodeman.NotifyMasternodeUpdates(*g_connman);
             } else {
                 strStatusHtml += "<br>Failed to start masternode.<br>Error: " + strError;
             }
@@ -134,7 +143,7 @@ void MasternodeList::StartAll(std::string strCommand)
     int nCountFailed = 0;
     std::string strFailedHtml;
 
-    for(CMasternodeConfig::CMasternodeEntry mne : masternodeConfig.getEntries()) {
+    for (CMasternodeConfig::CMasternodeEntry mne : masternodeConfig.getEntries()) {
         std::string strError;
         CMasternodeBroadcast mnb;
 
@@ -151,11 +160,17 @@ void MasternodeList::StartAll(std::string strCommand)
 
         if(fSuccess) {
             nCountSuccessful++;
+            mnodeman.UpdateMasternodeList(mnb, *g_connman);
+            mnb.Relay(*g_connman);
+            mnodeman.NotifyMasternodeUpdates(*g_connman);
         } else {
             nCountFailed++;
             strFailedHtml += "\nFailed to start " + mne.getAlias() + ". Error: " + strError;
         }
     }
+    // std::vector<std::shared_ptr<CWallet>> wallets = GetWallets();
+    // CWallet * const pwallet = (wallets.size() > 0) ? wallets[0].get() : nullptr;
+    // pwallet->Lock();
 
     std::string returnObj;
     returnObj = strprintf("Successfully started %d masternodes, failed to start %d, total %d", nCountSuccessful, nCountFailed, nCountFailed + nCountSuccessful);
@@ -196,9 +211,8 @@ void MasternodeList::updateMyMasternodeInfo(QString strAlias, QString strAddr, c
     QTableWidgetItem *protocolItem = new QTableWidgetItem(QString::number(fFound ? infoMn.nProtocolVersion : -1));
     QTableWidgetItem *statusItem = new QTableWidgetItem(QString::fromStdString(fFound ? CMasternode::StateToString(infoMn.nActiveState) : "MISSING"));
     QTableWidgetItem *activeSecondsItem = new QTableWidgetItem(QString::fromStdString(DurationToDHMS(fFound ? (infoMn.nTimeLastPing - infoMn.sigTime) : 0)));
-    QTableWidgetItem *lastSeenItem = new QTableWidgetItem(QString::fromStdString(DateTimeStrFormat("%Y-%m-%d %H:%M",
-                                                                                                   fFound ? infoMn.nTimeLastPing + GetOffsetFromUtc() : 0)));
-    QTableWidgetItem *pubkeyItem = new QTableWidgetItem(QString::fromStdString(fFound ? CBitcoinAddress(infoMn.pubKeyCollateralAddress.GetID()).ToString() : ""));
+    QTableWidgetItem *lastSeenItem = new QTableWidgetItem(QString::fromStdString(FormatISO8601DateTime(fFound ? infoMn.nTimeLastPing + GetOffsetFromUtc() : 0)));
+    QTableWidgetItem *pubkeyItem = new QTableWidgetItem(QString::fromStdString(fFound ? EncodeDestination(infoMn.pubKeyCollateralAddress.GetID()) : ""));
 
     ui->tableWidgetMyMasternodes->setItem(nNewRow, 0, aliasItem);
     ui->tableWidgetMyMasternodes->setItem(nNewRow, 1, addrItem);
@@ -226,7 +240,7 @@ void MasternodeList::updateMyNodeList(bool fForce)
     nTimeMyListUpdated = GetTime();
 
     ui->tableWidgetMasternodes->setSortingEnabled(false);
-    for(CMasternodeConfig::CMasternodeEntry mne : masternodeConfig.getEntries()) {
+    for (CMasternodeConfig::CMasternodeEntry mne : masternodeConfig.getEntries()) {
         int32_t nOutputIndex = 0;
         if(!ParseInt32(mne.getOutputIndex(), &nOutputIndex)) {
             continue;
@@ -278,8 +292,8 @@ void MasternodeList::updateNodeList()
         QTableWidgetItem *protocolItem = new QTableWidgetItem(QString::number(mn.nProtocolVersion));
         QTableWidgetItem *statusItem = new QTableWidgetItem(QString::fromStdString(mn.GetStatus()));
         QTableWidgetItem *activeSecondsItem = new QTableWidgetItem(QString::fromStdString(DurationToDHMS(mn.lastPing.sigTime - mn.sigTime)));
-        QTableWidgetItem *lastSeenItem = new QTableWidgetItem(QString::fromStdString(DateTimeStrFormat("%Y-%m-%d %H:%M", mn.lastPing.sigTime + offsetFromUtc)));
-        QTableWidgetItem *pubkeyItem = new QTableWidgetItem(QString::fromStdString(CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString()));
+        QTableWidgetItem *lastSeenItem = new QTableWidgetItem(QString::fromStdString(FormatISO8601DateTime(mn.lastPing.sigTime + offsetFromUtc)));
+        QTableWidgetItem *pubkeyItem = new QTableWidgetItem(QString::fromStdString(EncodeDestination(mn.pubKeyCollateralAddress.GetID())));
 
         if (strCurrentFilter != "")
         {
@@ -339,7 +353,7 @@ void MasternodeList::on_startButton_clicked()
 
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
 
-    if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForStakingOnly) {
+    if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForMixingOnly) {
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
 
         if(!ctx.isValid()) return; // Unlock wallet was cancelled
@@ -363,7 +377,7 @@ void MasternodeList::on_startAllButton_clicked()
 
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
 
-    if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForStakingOnly) {
+    if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForMixingOnly) {
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
 
         if(!ctx.isValid()) return; // Unlock wallet was cancelled
@@ -395,7 +409,7 @@ void MasternodeList::on_startMissingButton_clicked()
 
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
 
-    if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForStakingOnly) {
+    if(encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForMixingOnly) {
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
 
         if(!ctx.isValid()) return; // Unlock wallet was cancelled
@@ -418,12 +432,3 @@ void MasternodeList::on_UpdateButton_clicked()
 {
     updateMyNodeList(true);
 }
-
-void MasternodeList::onThemeChanged()
-{
-    auto themeName = GUIUtil::getThemeName();
-    ui->label->setPixmap(QPixmap(
-                             QString(
-                                 ":/images/res/images/pages/masternodes/%1/masternodes-header.png").arg(themeName)));
-}
-

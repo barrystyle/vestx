@@ -1,14 +1,12 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_SPLASHSCREEN_H
-#define BITCOIN_QT_SPLASHSCREEN_H
+#ifndef FXTC_QT_SPLASHSCREEN_H
+#define FXTC_QT_SPLASHSCREEN_H
 
 #include <functional>
 #include <QSplashScreen>
-
-#include <interfaces/wallet.h>
 
 #include <memory>
 
@@ -45,8 +43,6 @@ public Q_SLOTS:
     /** Show message and progress */
     void showMessage(const QString &message, int alignment, const QColor &color);
 
-//    /** Sets the break action */
-//    void setBreakAction(const std::function<void(void)> &action);
 protected:
     bool eventFilter(QObject * obj, QEvent * ev);
 
@@ -71,4 +67,4 @@ private:
     std::list<std::unique_ptr<interfaces::Handler>> m_connected_wallet_handlers;
 };
 
-#endif // BITCOIN_QT_SPLASHSCREEN_H
+#endif // FXTC_QT_SPLASHSCREEN_H

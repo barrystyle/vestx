@@ -1,4 +1,4 @@
-// Copyright (c) 2015-2017 The Bitcoin Core developers
+// Copyright (c) 2015-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -23,7 +23,7 @@ static const struct {
     {"macosx", false, false, true},
     {"windows", true, false, false},
     /* Other: linux, unix, ... */
-    {"other", true, false, false}
+    {"other", true, true, false}
 };
 static const unsigned platform_styles_count = sizeof(platform_styles)/sizeof(*platform_styles);
 
@@ -46,7 +46,7 @@ void MakeSingleColorImage(QImage& img, const QColor& colorbase)
 QIcon ColorizeIcon(const QIcon& ico, const QColor& colorbase)
 {
     QIcon new_ico;
-    for (const QSize sz : ico.availableSizes())
+    for (const QSize& sz : ico.availableSizes())
     {
         QImage img(ico.pixmap(sz).toImage());
         MakeSingleColorImage(img, colorbase);
@@ -75,8 +75,8 @@ PlatformStyle::PlatformStyle(const QString &_name, bool _imagesOnButtons, bool _
     imagesOnButtons(_imagesOnButtons),
     colorizeIcons(_colorizeIcons),
     useExtraSpacing(_useExtraSpacing),
-    singleColor(0, 0, 0),
-    textColor(0, 0, 0)
+    singleColor(0,0,0),
+    textColor(0,0,0)
 {
     // Determine icon highlighting color
     if (colorizeIcons) {

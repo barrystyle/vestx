@@ -1,4 +1,6 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,7 +13,6 @@
 #include <qt/recentrequeststablemodel.h>
 #include <qt/sendcoinsdialog.h>
 #include <qt/transactiontablemodel.h>
-#include <qt/tposaddressestablemodel.h>
 
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
@@ -20,7 +21,6 @@
 #include <util.h> // for GetBoolArg
 #include <wallet/coincontrol.h>
 #include <wallet/wallet.h>
-#include <masternodelist.h>
 
 #include <stdint.h>
 
@@ -43,7 +43,6 @@ WalletModel::WalletModel(std::unique_ptr<interfaces::Wallet> wallet, interfaces:
     addressTableModel = new AddressTableModel(this);
     transactionTableModel = new TransactionTableModel(platformStyle, this);
     recentRequestsTableModel = new RecentRequestsTableModel(this);
-    tposTableModel = new TPoSAddressesTableModel(this, optionsModel);
 
     // This timer will be fired repeatedly to update the balance
     pollTimer = new QTimer(this);
@@ -136,11 +135,6 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         return OK;
     }
 
-    if (isStakingOnlyUnlocked())
-    {
-        return StakingOnlyUnlocked;
-    }
-
     QSet<QString> setAddress; // Used to detect duplicates
     int nAddresses = 0;
 
@@ -209,7 +203,11 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         std::string strFailReason;
 
         auto& newTx = transaction.getWtx();
+
+        // Dash
+        // FXTC TODO: check
         newTx = m_wallet->createTransaction(vecSend, coinControl, true /* sign */, nChangePosRet, nFeeRequired, strFailReason);
+
         transaction.setTransactionFee(nFeeRequired);
         if (fSubtractFeeFromAmount && newTx)
             transaction.reassignAmounts(nChangePosRet);
@@ -239,10 +237,6 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
 {
     QByteArray transaction_array; /* store serialized transaction */
 
-    if (isStakingOnlyUnlocked()) {
-        return StakingOnlyUnlocked;
-    }
-
     {
         std::vector<std::pair<std::string, std::string>> vOrderForm;
         for (const SendCoinsRecipient &rcp : transaction.getRecipients())
@@ -259,7 +253,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
                 rcp.paymentRequest.SerializeToString(&value);
                 vOrderForm.emplace_back("PaymentRequest", std::move(value));
             }
-            else if (!rcp.message.isEmpty()) // Message from normal vestx:URI (vestx:123...?message=example)
+            else if (!rcp.message.isEmpty()) // Message from normal bitcoin:URI (bitcoin:123...?message=example)
                 vOrderForm.emplace_back("Message", rcp.message.toStdString());
         }
 
@@ -325,11 +319,6 @@ RecentRequestsTableModel *WalletModel::getRecentRequestsTableModel()
     return recentRequestsTableModel;
 }
 
-TPoSAddressesTableModel *WalletModel::getTPoSAddressModel() const
-{
-    return tposTableModel;
-}
-
 WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const
 {
     if(!m_wallet->isCrypted())
@@ -340,9 +329,9 @@ WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const
     {
         return Locked;
     }
-    else if(m_wallet->isLockedForStaking())
+    else if(m_wallet->isLocked())
     {
-        return UnlockedForStakingOnly;
+        return UnlockedForMixingOnly;
     }
     else
     {
@@ -364,7 +353,7 @@ bool WalletModel::setWalletEncrypted(bool encrypted, const SecureString &passphr
     }
 }
 
-bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, bool stakingOnly)
+bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, bool fMixing)
 {
     if(locked)
     {
@@ -374,13 +363,8 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, b
     else
     {
         // Unlock
-        return m_wallet->unlock(passPhrase, stakingOnly);
+        return m_wallet->unlock(passPhrase, fMixing);
     }
-}
-
-bool WalletModel::isStakingOnlyUnlocked()
-{
-    return m_wallet->isLockedForStaking();
 }
 
 bool WalletModel::changePassphrase(const SecureString &oldPass, const SecureString &newPass)
@@ -389,7 +373,6 @@ bool WalletModel::changePassphrase(const SecureString &oldPass, const SecureStri
     return m_wallet->changeWalletPassphrase(oldPass, newPass);
 }
 
-// Handlers for core signals
 static void NotifyKeyStoreStatusChanged(WalletModel *walletmodel)
 {
     qDebug() << "NotifyKeyStoreStatusChanged";
@@ -436,7 +419,6 @@ static void NotifyWatchonlyChanged(WalletModel *walletmodel, bool fHaveWatchonly
 
 void WalletModel::subscribeToCoreSignals()
 {
-    // Connect signals to wallet
     m_handler_status_changed = m_wallet->handleStatusChanged(boost::bind(&NotifyKeyStoreStatusChanged, this));
     m_handler_address_book_changed = m_wallet->handleAddressBookChanged(boost::bind(NotifyAddressBookChanged, this, _1, _2, _3, _4, _5));
     m_handler_transaction_changed = m_wallet->handleTransactionChanged(boost::bind(NotifyTransactionChanged, this, _1, _2));
@@ -446,7 +428,6 @@ void WalletModel::subscribeToCoreSignals()
 
 void WalletModel::unsubscribeFromCoreSignals()
 {
-    // Disconnect signals from wallet
     m_handler_status_changed->disconnect();
     m_handler_address_book_changed->disconnect();
     m_handler_transaction_changed->disconnect();
@@ -455,38 +436,61 @@ void WalletModel::unsubscribeFromCoreSignals()
 }
 
 // WalletModel::UnlockContext implementation
-WalletModel::UnlockContext WalletModel::requestUnlock()
+WalletModel::UnlockContext WalletModel::requestUnlock(bool fForMixingOnly)
 {
-    bool was_locked = getEncryptionStatus() == Locked;
+    // Dash
+    //bool was_locked = getEncryptionStatus() == Locked;
+    EncryptionStatus encStatusOld = getEncryptionStatus();
 
-    if (!was_locked && isStakingOnlyUnlocked()) {
-        setWalletLocked(true);
-        was_locked = getEncryptionStatus() == Locked;
-    }
+    // Wallet was completely locked
+    bool was_locked = (encStatusOld == Locked);
+    // Wallet was unlocked for mixing
+    bool was_mixing = (encStatusOld == UnlockedForMixingOnly);
+    // Wallet was unlocked for mixing and now user requested to fully unlock it
+    bool fMixingToFullRequested = !fForMixingOnly && was_mixing;
 
-    if(was_locked)
+    //if(was_locked)
+    if(was_locked || fMixingToFullRequested)
+    //
     {
         // Request UI to unlock wallet
-        Q_EMIT requireUnlock();
+        //Q_EMIT requireUnlock();
+        Q_EMIT requireUnlock(fForMixingOnly);
     }
-    // If wallet is still locked, unlock was failed or cancelled, mark context as invalid
-    bool valid = getEncryptionStatus() != Locked;
 
-    return UnlockContext(this, valid, was_locked);
+    // If wallet is still locked, unlock was failed or cancelled, mark context as invalid
+    //bool valid = getEncryptionStatus() != Locked;
+    EncryptionStatus encStatusNew = getEncryptionStatus();
+
+    // Wallet was locked, user requested to unlock it for mixing and failed to do so
+    bool fMixingUnlockFailed = fForMixingOnly && !(encStatusNew == UnlockedForMixingOnly);
+    // Wallet was unlocked for mixing, user requested to fully unlock it and failed
+    bool fMixingToFullFailed = fMixingToFullRequested && !(encStatusNew == Unlocked);
+    // If wallet is still locked, unlock failed or was cancelled, mark context as invalid
+    bool fInvalid = (encStatusNew == Locked) || fMixingUnlockFailed || fMixingToFullFailed;
+    // Wallet was not locked in any way or user tried to unlock it for mixing only and succeeded, keep it unlocked
+    bool fKeepUnlocked = !was_locked || (fForMixingOnly && !fMixingUnlockFailed);
+
+    //return UnlockContext(this, valid, was_locked);
+    return UnlockContext(this, !fInvalid, !fKeepUnlocked, was_mixing);
+    //
 }
 
-WalletModel::UnlockContext::UnlockContext(WalletModel *_wallet, bool _valid, bool _relock):
+WalletModel::UnlockContext::UnlockContext(WalletModel *_wallet, bool _valid, bool _relock, bool was_mixing):
         wallet(_wallet),
         valid(_valid),
-        relock(_relock)
+        relock(_relock),
+        // Dash
+        was_mixing(was_mixing)
+        //
 {
 }
 
 WalletModel::UnlockContext::~UnlockContext()
 {
-    if(valid && relock)
+    if(valid && (relock || was_mixing))
     {
-        wallet->setWalletLocked(true);
+        wallet->setWalletLocked(true, "", was_mixing);
     }
 }
 
@@ -495,6 +499,9 @@ void WalletModel::UnlockContext::CopyFrom(const UnlockContext& rhs)
     // Transfer context; old object no longer relocks wallet
     *this = rhs;
     rhs.relock = false;
+    // Dash
+    rhs.was_mixing = false;
+    //
 }
 
 void WalletModel::loadReceiveRequests(std::vector<std::string>& vReceiveRequests)
@@ -581,6 +588,11 @@ bool WalletModel::isWalletEnabled()
 {
    return !gArgs.GetBoolArg("-disablewallet", DEFAULT_DISABLE_WALLET);
 }
+
+//bool WalletModel::privateKeysDisabled() const
+//{
+//    return m_wallet->IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS);
+//}
 
 QString WalletModel::getWalletName() const
 {
