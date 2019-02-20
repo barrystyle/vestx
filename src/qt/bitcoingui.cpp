@@ -320,15 +320,34 @@ void BitcoinGUI::createActions()
     backupWalletAction->setStatusTip(tr("Backup wallet to another location"));
     changePassphraseAction = new QAction(platformStyle->TextColorIcon(":/icons/key"), tr("&Change Passphrase..."), this);
     changePassphraseAction->setStatusTip(tr("Change the passphrase used for wallet encryption"));
-
     signMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/edit"), tr("Sign &message..."), this);
     signMessageAction->setStatusTip(tr("Sign messages with your VESTX addresses to prove you own them"));
     verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified VESTX addresses"));
 
-    openRPCConsoleAction = new QAction(platformStyle->TextColorIcon(":/icons/debugwindow"), tr("&Debug window"), this);
-    openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
-    openRPCConsoleAction->setEnabled(false);
+    openInfoAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Information"), this);
+    openInfoAction->setStatusTip(tr("Show diagnostic information"));
+    openRPCConsoleAction = new QAction(QIcon(":/icons/debugwindow"), tr("&Debug console"), this);
+    openRPCConsoleAction->setStatusTip(tr("Open debugging console"));
+    openGraphAction = new QAction(QIcon(":/icons/connect_4"), tr("&Network Monitor"), this);
+    openGraphAction->setStatusTip(tr("Show network monitor"));
+    openPeersAction = new QAction(QIcon(":/icons/connect_4"), tr("&Peers list"), this);
+    openPeersAction->setStatusTip(tr("Show peers info"));
+    openRepairAction = new QAction(QIcon(":/icons/options"), tr("Wallet &Repair"), this);
+    openRepairAction->setStatusTip(tr("Show wallet repair options"));
+    openConfEditorAction = new QAction(QIcon(":/icons/edit"), tr("Open Wallet &Configuration File"), this);
+    openConfEditorAction->setStatusTip(tr("Open configuration file"));
+    openMNConfEditorAction = new QAction(QIcon(":/icons/edit"), tr("Open &Masternode Configuration File"), this);
+    openMNConfEditorAction->setStatusTip(tr("Open Masternode configuration file"));
+    showBackupsAction = new QAction(QIcon(":/icons/browse"), tr("Show Automatic &Backups"), this);
+    showBackupsAction->setStatusTip(tr("Show automatically created wallet backups"));
+
+    openInfoAction->setEnabled(true);
+    openRPCConsoleAction->setEnabled(true);
+    openGraphAction->setEnabled(true);
+    openPeersAction->setEnabled(true);
+    openRepairAction->setEnabled(false);
+    showBackupsAction->setEnabled(false);
 
     usedSendingAddressesAction = new QAction(platformStyle->TextColorIcon(":/icons/address-book"), tr("&Sending addresses..."), this);
     usedSendingAddressesAction->setStatusTip(tr("Show the list of used sending addresses and labels"));
@@ -350,6 +369,11 @@ void BitcoinGUI::createActions()
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(showHelpMessageAction, SIGNAL(triggered()), this, SLOT(showHelpMessageClicked()));
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
+    connect(openInfoAction, SIGNAL(triggered()), this, SLOT(showInfo()));
+    connect(openGraphAction, SIGNAL(triggered()), this, SLOT(showGraph()));
+    connect(openPeersAction, SIGNAL(triggered()), this, SLOT(showPeers()));
+    connect(openRepairAction, SIGNAL(triggered()), this, SLOT(showRepair()));
+    connect(showBackupsAction, SIGNAL(triggered()), this, SLOT(showBackups()));
 
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
@@ -408,6 +432,20 @@ void BitcoinGUI::createMenuBar()
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
+
+    if(walletFrame)
+    {
+        QMenu *tools = appMenuBar->addMenu(tr("&Tools"));
+        tools->addAction(openInfoAction);
+        tools->addAction(openRPCConsoleAction);
+        tools->addAction(openGraphAction);
+        tools->addAction(openPeersAction);
+        tools->addAction(openRepairAction);
+        tools->addSeparator();
+        tools->addAction(openConfEditorAction);
+        tools->addAction(openMNConfEditorAction);
+        tools->addAction(showBackupsAction);
+    }
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     if(walletFrame)
@@ -651,7 +689,16 @@ void BitcoinGUI::createTrayIconMenu()
         trayIconMenu->addAction(signMessageAction);
         trayIconMenu->addAction(verifyMessageAction);
         trayIconMenu->addSeparator();
+        trayIconMenu->addAction(optionsAction);
+        trayIconMenu->addAction(openInfoAction);
         trayIconMenu->addAction(openRPCConsoleAction);
+        trayIconMenu->addAction(openGraphAction);
+        trayIconMenu->addAction(openPeersAction);
+        trayIconMenu->addAction(openRepairAction);
+        trayIconMenu->addSeparator();
+        trayIconMenu->addAction(openConfEditorAction);
+        trayIconMenu->addAction(openMNConfEditorAction);
+        trayIconMenu->addAction(showBackupsAction);
     }
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addAction(openRPCConsoleAction);
@@ -709,12 +756,45 @@ void BitcoinGUI::showDebugWindowActivateConsole()
     showDebugWindow();
 }
 
-// Dash
+void BitcoinGUI::showInfo()
+{
+    rpcConsole->setTabFocus(RPCConsole::TAB_INFO);
+    showDebugWindow();
+}
+
+void BitcoinGUI::showConsole()
+{
+    rpcConsole->setTabFocus(RPCConsole::TAB_CONSOLE);
+    showDebugWindow();
+}
+
+void BitcoinGUI::showGraph()
+{
+    rpcConsole->setTabFocus(RPCConsole::TAB_GRAPH);
+    showDebugWindow();
+}
+
+void BitcoinGUI::showPeers()
+{
+    rpcConsole->setTabFocus(RPCConsole::TAB_PEERS);
+    showDebugWindow();
+}
+
+// void BitcoinGUI::showRepair()
+// {
+//    rpcConsole->setTabFocus(RPCConsole::TAB_REPAIR);
+//    showDebugWindow();
+// }
+
+void BitcoinGUI::showConfEditor()
+{
+    GUIUtil::openConfigfile();
+}
+
 void BitcoinGUI::showMNConfEditor()
 {
     GUIUtil::openMNConfigfile();
 }
-//
 
 void BitcoinGUI::showHelpMessageClicked()
 {

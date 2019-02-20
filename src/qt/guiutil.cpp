@@ -413,7 +413,14 @@ bool openBitcoinConf()
     return QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
 }
 
-// Dash
+void openConfigfile()
+{
+    boost::filesystem::path pathConfig = GetConfigFile(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME));
+
+    if (boost::filesystem::exists(pathConfig))
+        QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
+}
+
 void openMNConfigfile()
 {
     boost::filesystem::path pathConfig = GetConfigFile(MASTERNODE_CONF_FILENAME);
@@ -430,7 +437,6 @@ void openMNConfigfile()
     if (fs::exists(pathConfig))
         QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
 }
-//
 
 ToolTipToRichTextFilter::ToolTipToRichTextFilter(int _size_threshold, QObject *parent) :
     QObject(parent),

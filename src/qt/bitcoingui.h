@@ -107,9 +107,7 @@ private:
     QToolBar* appToolBar = nullptr;
     QAction* overviewAction = nullptr;
     QAction* historyAction = nullptr;
-    // Dash
     QAction *masternodeAction = nullptr;
-    //
     QAction* quitAction = nullptr;
     QAction* sendCoinsAction = nullptr;
     QAction* sendCoinsMenuAction = nullptr;
@@ -118,23 +116,29 @@ private:
     QAction* signMessageAction = nullptr;
     QAction* verifyMessageAction = nullptr;
     QAction* aboutAction = nullptr;
-    QAction* receiveCoinsAction = nullptr;
-    QAction* receiveCoinsMenuAction = nullptr;
-    QAction* optionsAction = nullptr;
-    QAction* toggleHideAction = nullptr;
-    QAction* encryptWalletAction = nullptr;
-    QAction* backupWalletAction = nullptr;
-    QAction* changePassphraseAction = nullptr;
-    // Dash
+    QAction *receiveCoinsAction = nullptr;
+    QAction* merchantAction = nullptr;
+    QAction* tposTabAction = nullptr;
+    QAction *receiveCoinsMenuAction = nullptr;
+    QAction *optionsAction = nullptr;
+    QAction *toggleHideAction = nullptr;
+    QAction *encryptWalletAction = nullptr;
+    QAction *backupWalletAction = nullptr;
+    QAction *changePassphraseAction = nullptr;
     QAction *unlockWalletAction = nullptr;
-    //
-    QAction* aboutQtAction = nullptr;
-    QAction* openRPCConsoleAction = nullptr;
-    // Dash
+    QAction *lockWalletAction = nullptr;
+    QAction *aboutQtAction = nullptr;
+    QAction *openInfoAction = nullptr;
+    QAction *openRPCConsoleAction = nullptr;
+    QAction *openGraphAction = nullptr;
+    QAction *openPeersAction = nullptr;
+    QAction *openRepairAction = nullptr;
+    QAction *openConfEditorAction = nullptr;
     QAction *openMNConfEditorAction = nullptr;
-    //
-    QAction* openAction = nullptr;
-    QAction* showHelpMessageAction = nullptr;
+    QAction *showBackupsAction = nullptr;
+    QAction *openAction = nullptr;
+    QAction *showHelpMessageAction = nullptr;
+
     QAction* m_wallet_selector_label_action = nullptr;
     QAction* m_wallet_selector_action = nullptr;
 
@@ -269,22 +273,19 @@ private Q_SLOTS:
     /** Show debug window and set focus to the console */
     void showDebugWindowActivateConsole();
 
-    // Dash
-    // FXTC TODO: menu items
     /** Show debug window and set focus to the appropriate tab */
-    //-//void showInfo();
-    //-//void showConsole();
-    //-//void showGraph();
-    //-//void showPeers();
-    //-//void showRepair();
+    void showInfo();
+    void showConsole();
+    void showGraph();
+    void showPeers();
+    // void showRepair();
 
     /** Open external (default) editor with dash.conf */
-    //-//void showConfEditor();
+    void showConfEditor();
     /** Open external (default) editor with masternode.conf */
     void showMNConfEditor();
     /** Show folder with wallet backups in default file browser */
-    //-//void showBackups();
-    //
+    // void showBackups();
 
     /** Show help message dialog */
     void showHelpMessageClicked();
