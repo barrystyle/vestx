@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_COINCONTROLDIALOG_H
-#define BITCOIN_QT_COINCONTROLDIALOG_H
+#ifndef FXTC_QT_COINCONTROLDIALOG_H
+#define FXTC_QT_COINCONTROLDIALOG_H
 
 #include <amount.h>
 
@@ -49,7 +49,7 @@ public:
     void setModel(WalletModel *model);
 
     // static because also called from sendcoinsdialog
-    static void updateLabels(WalletModel*, QWidget *);
+    static void updateLabels(WalletModel*, QDialog*);
 
     static QList<CAmount> payAmounts;
     static CCoinControl *coinControl();
@@ -106,8 +106,7 @@ private Q_SLOTS:
     void headerSectionClicked(int);
     void buttonBoxClicked(QAbstractButton*);
     void buttonSelectAllClicked();
-    void buttonToggleLockClicked();
     void updateLabelLocked();
 };
 
-#endif // BITCOIN_QT_COINCONTROLDIALOG_H
+#endif // FXTC_QT_COINCONTROLDIALOG_H

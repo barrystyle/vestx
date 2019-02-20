@@ -41,6 +41,9 @@ extern bool fMasterNode;
 extern bool fMerchantNode;
 extern bool fLiteMode;
 
+const char * const MASTERNODE_CONF_FILENAME_ARG = "-mnconf";
+const char * const MASTERNODE_CONF_FILENAME = "masternode.conf";
+
 /** Signals for translation. */
 class CTranslationInterface
 {

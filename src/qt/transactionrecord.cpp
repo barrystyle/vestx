@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -25,7 +25,7 @@ bool TransactionRecord::showTransaction()
 /*
  * Decompose CWallet transaction to model transaction records.
  */
-QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interfaces::WalletTx& wtx, interfaces::Wallet& wallet)
+QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interfaces::WalletTx& wtx)
 {
     QList<TransactionRecord> parts;
     int64_t nTime = wtx.time;
@@ -35,87 +35,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
     uint256 hash = wtx.tx->GetHash();
     std::map<std::string, std::string> mapValue = wtx.value_map;
 
-
-    if(wtx.tx->IsCoinStake())
-    {
-        TransactionRecord sub(hash, nTime);
-        CTxDestination address;
-        if (!ExtractDestination(wtx.tx->vout[1].scriptPubKey, address))
-            return parts;
-
-        if (!wtx.txout_is_mine[1])
-        {
-            //if the address is not yours then it means you have a tx sent to you in someone elses coinstake tx
-            // this might be masternode reward, or tpos block reward.
-
-            // if last output was ours, it means that it's tpos reward
-            CAmount stakeAmount = 0;
-            CAmount commissionAmount = 0;
-            CTxDestination tposAddress;
-            CTxDestination merchantAddress;
-            if(wallet.getTPoSPayments(wtx.tx, stakeAmount, commissionAmount, tposAddress, merchantAddress))
-            {
-                //stake reward
-                sub.involvesWatchAddress = false;
-                sub.type = TransactionRecord::StakeMintTPoS;
-                sub.address = EncodeDestination(tposAddress);
-                sub.credit = stakeAmount;
-            }
-            else
-            {
-                for (unsigned int i = 1; i < wtx.tx->vout.size(); i++) {
-                    CTxDestination outAddress;
-                    if (ExtractDestination(wtx.tx->vout[i].scriptPubKey, outAddress)) {
-
-                        isminetype mine = wtx.txout_is_mine[i];
-                        if (mine) {
-                            //isminetype mine = wallet->IsMine(wtx.tx->vout[i]);
-                            sub.involvesWatchAddress = mine & ISMINE_WATCH_ONLY;
-                            sub.type = TransactionRecord::MNReward;
-                            sub.address = CBitcoinAddress(outAddress).ToString();
-                            sub.credit = wtx.tx->vout[i].nValue;
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            //stake reward
-            CAmount stakeAmount = 0;
-            CAmount commissionAmount = 0;
-            CTxDestination tposAddress;
-            CTxDestination merchantAddress;
-            bool isTPoSBlock = wallet.getTPoSPayments(wtx.tx, stakeAmount, commissionAmount, tposAddress, merchantAddress);
-            isminetype mine = wtx.txout_is_mine[1];
-            sub.involvesWatchAddress = mine & ISMINE_WATCH_ONLY;
-
-            if(isTPoSBlock)
-            {
-                if(sub.involvesWatchAddress)
-                {
-                    sub.type = TransactionRecord::StakeMintTPoSCommission;
-                    sub.address = EncodeDestination(merchantAddress);
-                    sub.credit = commissionAmount;
-                }
-                else
-                {
-                    sub.type = TransactionRecord::StakeMintTPoS;
-                    sub.address = EncodeDestination(tposAddress);
-                    sub.credit = stakeAmount;
-                }
-            }
-            else
-            {
-                sub.address = CBitcoinAddress(address).ToString();
-                sub.credit = nCredit - nDebit;
-                sub.type = TransactionRecord::StakeMint;
-            }
-
-        }
-        parts.append(sub);
-    }
-    else if (nNet > 0 || wtx.is_coinbase)
+    if (nNet > 0 || wtx.is_coinbase)
     {
         //
         // Credit
@@ -176,7 +96,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
             CAmount nChange = wtx.change;
 
             parts.append(TransactionRecord(hash, nTime, TransactionRecord::SendToSelf, "",
-                                           -(nDebit - nChange), nCredit - nChange));
+                            -(nDebit - nChange), nCredit - nChange));
             parts.last().involvesWatchAddress = involvesWatchAddress;   // maybe pass to TransactionRecord as constructor argument
         }
         else if (fAllFromMe)
@@ -244,10 +164,10 @@ void TransactionRecord::updateStatus(const interfaces::WalletTxStatus& wtx, int 
 
     // Sort order, unrecorded transactions sort to the top
     status.sortKey = strprintf("%010d-%01d-%010u-%03d",
-                               wtx.block_height,
-                               wtx.is_coinbase ? 1 : 0,
-                               wtx.time_received,
-                               idx);
+        wtx.block_height,
+        wtx.is_coinbase ? 1 : 0,
+        wtx.time_received,
+        idx);
     status.countsForBalance = wtx.is_trusted && !(wtx.blocks_to_maturity > 0);
     status.depth = wtx.depth_in_main_chain;
     status.cur_num_blocks = numBlocks;
@@ -266,8 +186,7 @@ void TransactionRecord::updateStatus(const interfaces::WalletTxStatus& wtx, int 
         }
     }
     // For generated transactions, determine maturity
-    else if(type == TransactionRecord::Generated || type == TransactionRecord::StakeMint
-            || type == TransactionRecord::MNReward)
+    else if(type == TransactionRecord::Generated)
     {
         if (wtx.blocks_to_maturity > 0)
         {
@@ -276,10 +195,6 @@ void TransactionRecord::updateStatus(const interfaces::WalletTxStatus& wtx, int 
             if (wtx.is_in_main_chain)
             {
                 status.matures_in = wtx.blocks_to_maturity;
-
-                // Check if the block was requested by anyone
-                if (adjustedTime - wtx.time_received > 2 * 60 && wtx.request_count == 0)
-                    status.status = TransactionStatus::MaturesWarning;
             }
             else
             {
@@ -296,10 +211,6 @@ void TransactionRecord::updateStatus(const interfaces::WalletTxStatus& wtx, int 
         if (status.depth < 0)
         {
             status.status = TransactionStatus::Conflicted;
-        }
-        else if (adjustedTime - wtx.time_received > 2 * 60 && wtx.request_count == 0)
-        {
-            status.status = TransactionStatus::Offline;
         }
         else if (status.depth == 0)
         {

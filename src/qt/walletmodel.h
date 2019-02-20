@@ -1,9 +1,11 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_WALLETMODEL_H
-#define BITCOIN_QT_WALLETMODEL_H
+#ifndef FXTC_QT_WALLETMODEL_H
+#define FXTC_QT_WALLETMODEL_H
 
 #include <amount.h>
 #include <key.h>
@@ -12,6 +14,12 @@
 
 #include <qt/paymentrequestplus.h>
 #include <qt/walletmodeltransaction.h>
+
+// Dash
+#ifdef ENABLE_WALLET
+#include <wallet/wallet.h>
+#endif // ENABLE_WALLET
+//
 
 #include <interfaces/wallet.h>
 #include <support/allocators/secure.h>
@@ -29,7 +37,6 @@ class PlatformStyle;
 class RecentRequestsTableModel;
 class TransactionTableModel;
 class WalletModelTransaction;
-class TPoSAddressesTableModel;
 
 class CCoinControl;
 class CKeyID;
@@ -60,6 +67,12 @@ public:
     // Todo: This is a hack, should be replaced with a cleaner solution!
     QString address;
     QString label;
+    // Dash
+#ifdef ENABLE_WALLET
+    AvailableCoinsType inputType;
+#endif // ENABLE_WALLET
+    bool fUseInstantSend;
+    //
     CAmount amount;
     // If from a payment request, this is used for storing the memo
     QString message;
@@ -126,23 +139,23 @@ public:
         TransactionCreationFailed, // Error returned when wallet is still locked
         TransactionCommitFailed,
         AbsurdFee,
-        PaymentRequestExpired,
-        StakingOnlyUnlocked
+        PaymentRequestExpired
     };
 
     enum EncryptionStatus
     {
-        Unencrypted,            // !wallet->IsCrypted()
-        Locked,                 // wallet->IsCrypted() && wallet->IsLocked()
-        Unlocked,               // wallet->IsCrypted() && !wallet->IsLocked()
-        UnlockedForStakingOnly // wallet->IsCrypted() && !wallet->IsLocked() && wallet->fWalletUnlockStakingOnly
+        Unencrypted,  // !wallet->IsCrypted()
+        Locked,       // wallet->IsCrypted() && wallet->IsLocked()
+        // Dash
+        UnlockedForMixingOnly,  // wallet->IsCrypted() && !wallet->IsLocked(true) && wallet->IsLocked()
+        //
+        Unlocked      // wallet->IsCrypted() && !wallet->IsLocked()
     };
 
     OptionsModel *getOptionsModel();
     AddressTableModel *getAddressTableModel();
     TransactionTableModel *getTransactionTableModel();
     RecentRequestsTableModel *getRecentRequestsTableModel();
-    TPoSAddressesTableModel *getTPoSAddressModel() const;
 
     EncryptionStatus getEncryptionStatus() const;
 
@@ -170,16 +183,14 @@ public:
     // Wallet encryption
     bool setWalletEncrypted(bool encrypted, const SecureString &passphrase);
     // Passphrase only needed when unlocking
-    bool setWalletLocked(bool locked, const SecureString &passPhrase=SecureString(), bool stakingOnly = false);
+    bool setWalletLocked(bool locked, const SecureString &passPhrase=SecureString(), bool fMixing=false);
     bool changePassphrase(const SecureString &oldPass, const SecureString &newPass);
-    // Is wallet unlocked for staking only?
-    bool isStakingOnlyUnlocked();
 
     // RAI object for unlocking wallet, returned by requestUnlock()
     class UnlockContext
     {
     public:
-        UnlockContext(WalletModel *wallet, bool valid, bool relock);
+        UnlockContext(WalletModel *wallet, bool valid, bool relock, bool was_mixing);
         ~UnlockContext();
 
         bool isValid() const { return valid; }
@@ -191,11 +202,17 @@ public:
         WalletModel *wallet;
         bool valid;
         mutable bool relock; // mutable, as it can be set to false by copying
+        // Dash
+        mutable bool was_mixing; // mutable, as it can be set to false by copying
+        //
 
         void CopyFrom(const UnlockContext& rhs);
     };
 
-    UnlockContext requestUnlock();
+    // Dash
+    //UnlockContext requestUnlock();
+    UnlockContext requestUnlock(bool fForMixingOnly = false);
+    //
 
     void loadReceiveRequests(std::vector<std::string>& vReceiveRequests);
     bool saveReceiveRequest(const std::string &sAddress, const int64_t nId, const std::string &sRequest);
@@ -203,6 +220,7 @@ public:
     bool bumpFee(uint256 hash);
 
     static bool isWalletEnabled();
+    bool privateKeysDisabled() const;
 
     interfaces::Node& node() const { return m_node; }
     interfaces::Wallet& wallet() const { return *m_wallet; }
@@ -214,6 +232,7 @@ public:
     AddressTableModel* getAddressTableModel() const { return addressTableModel; }
 private:
     std::unique_ptr<interfaces::Wallet> m_wallet;
+    std::unique_ptr<interfaces::Handler> m_handler_unload;
     std::unique_ptr<interfaces::Handler> m_handler_status_changed;
     std::unique_ptr<interfaces::Handler> m_handler_address_book_changed;
     std::unique_ptr<interfaces::Handler> m_handler_transaction_changed;
@@ -231,7 +250,6 @@ private:
     AddressTableModel *addressTableModel;
     TransactionTableModel *transactionTableModel;
     RecentRequestsTableModel *recentRequestsTableModel;
-    TPoSAddressesTableModel *tposTableModel;
 
     // Cache some values to be able to detect changes
     interfaces::WalletBalances m_cached_balances;
@@ -254,7 +272,7 @@ Q_SIGNALS:
     // Signal emitted when wallet needs to be unlocked
     // It is valid behaviour for listeners to keep the wallet locked after this signal;
     // this means that the unlocking failed or was cancelled.
-    void requireUnlock();
+    void requireUnlock(bool fForMixingOnly=false);
 
     // Fired when a message should be reported to the user
     void message(const QString &title, const QString &message, unsigned int style);
@@ -267,6 +285,9 @@ Q_SIGNALS:
 
     // Watch-only address added
     void notifyWatchonlyChanged(bool fHaveWatchonly);
+
+    // Signal that wallet is about to be removed
+    void unload();
 
 public Q_SLOTS:
     /* Wallet status might have changed */
@@ -281,4 +302,4 @@ public Q_SLOTS:
     void pollBalanceChanged();
 };
 
-#endif // BITCOIN_QT_WALLETMODEL_H
+#endif // FXTC_QT_WALLETMODEL_H

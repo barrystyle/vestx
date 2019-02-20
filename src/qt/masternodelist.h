@@ -1,10 +1,15 @@
-#ifndef MASTERNODELIST_H
-#define MASTERNODELIST_H
+// Copyright (c) 2014-2017 The Dash Core developers
+// Copyright (c) 2018 FXTC developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "primitives/transaction.h"
-#include "platformstyle.h"
-#include "sync.h"
-#include "util.h"
+#ifndef FXTC_QT_MASTERNODELIST_H
+#define FXTC_QT_MASTERNODELIST_H
+
+#include <primitives/transaction.h>
+#include <qt/platformstyle.h>
+#include <sync.h>
+#include <util.h>
 
 #include <QMenu>
 #include <QTimer>
@@ -73,6 +78,6 @@ private Q_SLOTS:
     void on_startMissingButton_clicked();
     void on_tableWidgetMyMasternodes_itemSelectionChanged();
     void on_UpdateButton_clicked();
-    void onThemeChanged();
 };
-#endif // MASTERNODELIST_H
+
+#endif // FXTC_QT_MASTERNODELIST_H

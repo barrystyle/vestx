@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_SENDCOINSDIALOG_H
-#define BITCOIN_QT_SENDCOINSDIALOG_H
+#ifndef FXTC_QT_SENDCOINSDIALOG_H
+#define FXTC_QT_SENDCOINSDIALOG_H
 
 #include <qt/walletmodel.h>
 
@@ -16,7 +16,6 @@ class ClientModel;
 class PlatformStyle;
 class SendCoinsEntry;
 class SendCoinsRecipient;
-class QButtonGroup;
 
 namespace Ui {
     class SendCoinsDialog;
@@ -27,7 +26,7 @@ class QUrl;
 QT_END_NAMESPACE
 
 /** Dialog for sending bitcoins */
-class SendCoinsDialog : public QWidget
+class SendCoinsDialog : public QDialog
 {
     Q_OBJECT
 
@@ -57,15 +56,10 @@ public Q_SLOTS:
 Q_SIGNALS:
     void coinsSent(const uint256& txid);
 
-private Q_SLOTS:
-    void onThemeChanged();
-
 private:
     Ui::SendCoinsDialog *ui;
     ClientModel *clientModel;
     WalletModel *model;
-    QButtonGroup *groupFee = nullptr;
-
     bool fNewRecipientAllowed;
     bool fFeeMinimized;
     const PlatformStyle *platformStyle;
@@ -129,4 +123,4 @@ private:
     int secDelay;
 };
 
-#endif // BITCOIN_QT_SENDCOINSDIALOG_H
+#endif // FXTC_QT_SENDCOINSDIALOG_H

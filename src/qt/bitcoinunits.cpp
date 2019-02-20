@@ -1,4 +1,5 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
+// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,20 +9,19 @@
 
 #include <QStringList>
 
-
 BitcoinUnits::BitcoinUnits(QObject *parent):
-    QAbstractListModel(parent),
-    unitlist(availableUnits())
+        QAbstractListModel(parent),
+        unitlist(availableUnits())
 {
 }
 
 QList<BitcoinUnits::Unit> BitcoinUnits::availableUnits()
 {
     QList<BitcoinUnits::Unit> unitlist;
-    unitlist.append(VESTX);
-    unitlist.append(mVESTX);
-    unitlist.append(uVESTX);
-    // unitlist.append(duffs);
+    unitlist.append(BTC);
+    unitlist.append(mBTC);
+    unitlist.append(uBTC);
+    unitlist.append(SAT);
     return unitlist;
 }
 
@@ -29,10 +29,10 @@ bool BitcoinUnits::valid(int unit)
 {
     switch(unit)
     {
-    case VESTX:
-    case mVESTX:
-    case uVESTX:
-    case duffs:
+    case BTC:
+    case mBTC:
+    case uBTC:
+    case SAT:
         return true;
     default:
         return false;
@@ -43,10 +43,10 @@ QString BitcoinUnits::longName(int unit)
 {
     switch(unit)
     {
-    case VESTX: return QString("VESTX");
-    case mVESTX: return QString("mVESTX");
-    case uVESTX: return QString::fromUtf8("µVESTX");
-    case duffs: return QString("duffs");
+    case BTC: return QString("VESTX");
+    case mBTC: return QString("mVESTX");
+    case uBTC: return QString::fromUtf8("µVESTX (fixes)");
+    case SAT: return QString("Fixie (fixies)");
     default: return QString("???");
     }
 }
@@ -55,8 +55,8 @@ QString BitcoinUnits::shortName(int unit)
 {
     switch(unit)
     {
-    case uVESTX: return QString::fromUtf8("µVESTX");
-    case duffs: return QString("duffs");
+    case uBTC: return QString::fromUtf8("fixes");
+    case SAT: return QString("fixies");
     default: return longName(unit);
     }
 }
@@ -65,10 +65,10 @@ QString BitcoinUnits::description(int unit)
 {
     switch(unit)
     {
-    case VESTX: return QString("VESTX");
-    case mVESTX: return QString("Milli-VESTX (1 / 1" THIN_SP_UTF8 "000)");
-    case uVESTX: return QString("Micro-VESTX (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
-    case duffs: return QString("Ten Nano-VESTX (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case BTC: return QString("VESTXs");
+    case mBTC: return QString("Milli-VESTXs (1 / 1" THIN_SP_UTF8 "000)");
+    case uBTC: return QString("Micro-VESTXs (fixes) (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case SAT: return QString("Fixie (fixies) (1 / 100" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
     default: return QString("???");
     }
 }
@@ -77,10 +77,10 @@ qint64 BitcoinUnits::factor(int unit)
 {
     switch(unit)
     {
-    case VESTX: return 100000000;
-    case mVESTX: return 100000;
-    case uVESTX: return 100;
-    case duffs: return 1;
+    case BTC: return 100000000;
+    case mBTC: return 100000;
+    case uBTC: return 100;
+    case SAT: return 1;
     default: return 100000000;
     }
 }
@@ -89,10 +89,10 @@ int BitcoinUnits::decimals(int unit)
 {
     switch(unit)
     {
-    case VESTX: return 8;
-    case mVESTX: return 5;
-    case uVESTX: return 2;
-    case duffs: return 0;
+    case BTC: return 8;
+    case mBTC: return 5;
+    case uBTC: return 2;
+    case SAT: return 0;
     default: return 0;
     }
 }
@@ -152,25 +152,6 @@ QString BitcoinUnits::formatHtmlWithUnit(int unit, const CAmount& amount, bool p
     str.replace(QChar(THIN_SP_CP), QString(THIN_SP_HTML));
     return QString("<span style='white-space: nowrap;'>%1</span>").arg(str);
 }
-
-//QString BitcoinUnits::floorWithUnit(int unit, const CAmount& amount, bool plussign, SeparatorStyle separators)
-//{
-//    QSettings settings;
-//    int digits = settings.value("digits").toInt();
-
-//    QString result = format(unit, amount, plussign, separators);
-//    if(decimals(unit) > digits) result.chop(decimals(unit) - digits);
-
-//    return result + QString(" ") + shortName(unit);
-//}
-
-//QString BitcoinUnits::floorHtmlWithUnit(int unit, const CAmount& amount, bool plussign, SeparatorStyle separators)
-//{
-//    QString str(floorWithUnit(unit, amount, plussign, separators));
-//    str.replace(QChar(THIN_SP_CP), QString(THIN_SP_HTML));
-//    return QString("<span style='white-space: nowrap;'>%1</span>").arg(str);
-//}
-
 
 
 bool BitcoinUnits::parse(int unit, const QString &value, CAmount *val_out)

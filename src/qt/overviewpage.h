@@ -1,12 +1,11 @@
-// Copyright (c) 2011-2017 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_OVERVIEWPAGE_H
-#define BITCOIN_QT_OVERVIEWPAGE_H
+#ifndef FXTC_QT_OVERVIEWPAGE_H
+#define FXTC_QT_OVERVIEWPAGE_H
 
 #include <interfaces/wallet.h>
-#include <amount.h>
 
 #include <QWidget>
 #include <memory>
@@ -46,12 +45,10 @@ Q_SIGNALS:
     void outOfSyncWarningClicked();
 
 private:
-    QTimer *timer;
     Ui::OverviewPage *ui;
     ClientModel *clientModel;
     WalletModel *walletModel;
     interfaces::WalletBalances m_balances;
-    //int nDisplayUnit;
 
     TxViewDelegate *txdelegate;
     std::unique_ptr<TransactionFilterProxy> filter;
@@ -62,7 +59,6 @@ private Q_SLOTS:
     void updateAlerts(const QString &warnings);
     void updateWatchOnlyLabels(bool showWatchOnly);
     void handleOutOfSyncWarningClicks();
-    void onThemeChanged();
 };
 
-#endif // BITCOIN_QT_OVERVIEWPAGE_H
+#endif // FXTC_QT_OVERVIEWPAGE_H

@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2018 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_EDITADDRESSDIALOG_H
-#define BITCOIN_QT_EDITADDRESSDIALOG_H
+#ifndef FXTC_QT_EDITADDRESSDIALOG_H
+#define FXTC_QT_EDITADDRESSDIALOG_H
 
 #include <QDialog>
 
@@ -25,6 +25,7 @@ class EditAddressDialog : public QDialog
 
 public:
     enum Mode {
+        NewReceivingAddress,
         NewSendingAddress,
         EditReceivingAddress,
         EditSendingAddress
@@ -56,4 +57,4 @@ private:
     QString address;
 };
 
-#endif // BITCOIN_QT_EDITADDRESSDIALOG_H
+#endif // FXTC_QT_EDITADDRESSDIALOG_H

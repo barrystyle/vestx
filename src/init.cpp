@@ -205,8 +205,6 @@ void Interrupt()
 
 static bool LoadExtensionsDataCaches()
 {
-    // LOAD SERIALIZED DAT FILES INTO DATA CACHES FOR INTERNAL USE
-
     boost::filesystem::path pathDB = GetDataDir();
     std::string strDBName;
 
@@ -219,24 +217,26 @@ static bool LoadExtensionsDataCaches()
     }
 
     CFlatDB<CMasternodeMan> flatdb1(strDBName, "magicMasternodeCache");
-    if(!flatdb1.Load(mnodeman)) {
-        return InitError(_("Failed to load masternode cache from") + "\n" + (pathDB / strDBName).string());
-    }
+
+    // fail silently, if this isnt found; we're just going to regenerate it anyway?
+    // if(!flatdb1.Load(mnodeman)) {
+    //    return InitError(_("Failed to load masternode cache from") + "\n" + (pathDB / strDBName).string());
+    // }
 
     if(mnodeman.size()) {
         strDBName = "mnpayments.dat";
         uiInterface.InitMessage(_("Loading masternode payment cache..."));
         CFlatDB<CMasternodePayments> flatdb2(strDBName, "magicMasternodePaymentsCache");
-        if(!flatdb2.Load(mnpayments)) {
-            return InitError(_("Failed to load masternode payments cache from") + "\n" + (pathDB / strDBName).string());
-        }
+        // if(!flatdb2.Load(mnpayments)) {
+        //    return InitError(_("Failed to load masternode payments cache from") + "\n" + (pathDB / strDBName).string());
+        // }
 
         strDBName = "governance.dat";
         uiInterface.InitMessage(_("Loading governance cache..."));
         CFlatDB<CGovernanceManager> flatdb3(strDBName, "magicGovernanceCache");
-        if(!flatdb3.Load(governance)) {
-            return InitError(_("Failed to load governance cache from") + "\n" + (pathDB / strDBName).string());
-        }
+        // if(!flatdb3.Load(governance)) {
+        //    return InitError(_("Failed to load governance cache from") + "\n" + (pathDB / strDBName).string());
+        // }
         governance.InitOnLoad();
     } else {
         uiInterface.InitMessage(_("Masternode cache is empty, skipping payments and governance cache..."));
@@ -245,14 +245,14 @@ static bool LoadExtensionsDataCaches()
     strDBName = "netfulfilled.dat";
     uiInterface.InitMessage(_("Loading fulfilled requests cache..."));
     CFlatDB<CNetFulfilledRequestManager> flatdb4(strDBName, "magicFulfilledCache");
-    if(!flatdb4.Load(netfulfilledman)) {
-        return InitError(_("Failed to load fulfilled requests cache from") + "\n" + (pathDB / strDBName).string());
-    }
+    // if(!flatdb4.Load(netfulfilledman)) {
+    //    return InitError(_("Failed to load fulfilled requests cache from") + "\n" + (pathDB / strDBName).string());
+    // }
 
     CFlatDB<CMerchantnodeMan> flatdb5("merchantnodecache.dat", "magicMerchantnodeCache");
-    if(!flatdb5.Load(merchantnodeman)) {
-        return InitError(_("Failed to load merchantnode cache from") + "\n" + (pathDB / strDBName).string());
-    }
+    // if(!flatdb5.Load(merchantnodeman)) {
+    //    return InitError(_("Failed to load merchantnode cache from") + "\n" + (pathDB / strDBName).string());
+    // }
 
     return true;
 }
