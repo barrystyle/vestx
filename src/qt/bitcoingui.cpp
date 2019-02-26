@@ -780,11 +780,11 @@ void BitcoinGUI::showPeers()
     showDebugWindow();
 }
 
-// void BitcoinGUI::showRepair()
-// {
-//    rpcConsole->setTabFocus(RPCConsole::TAB_REPAIR);
-//    showDebugWindow();
-// }
+void BitcoinGUI::showRepair()
+{
+    rpcConsole->setTabFocus(RPCConsole::TAB_REPAIR);
+    showDebugWindow();
+}
 
 void BitcoinGUI::showConfEditor()
 {
@@ -1181,8 +1181,11 @@ void BitcoinGUI::closeEvent(QCloseEvent *event)
 
 void BitcoinGUI::showEvent(QShowEvent *event)
 {
-    // enable the debug window when the main window shows up
+    openInfoAction->setEnabled(true);
     openRPCConsoleAction->setEnabled(true);
+    openGraphAction->setEnabled(true);
+    openPeersAction->setEnabled(true);
+    openRepairAction->setEnabled(true);
     aboutAction->setEnabled(true);
     optionsAction->setEnabled(true);
 }

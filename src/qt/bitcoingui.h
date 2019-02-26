@@ -278,7 +278,7 @@ private Q_SLOTS:
     void showConsole();
     void showGraph();
     void showPeers();
-    // void showRepair();
+    void showRepair();
 
     /** Open external (default) editor with dash.conf */
     void showConfEditor();
