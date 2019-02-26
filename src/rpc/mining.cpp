@@ -958,7 +958,6 @@ static UniValue setgenerate(const JSONRPCRequest& request)
     if (Params().MineBlocksOnDemand())
         throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Use the generate method instead of setgenerate on this network");
 
-
     const auto& params = request.params;
     bool fGenerate = true;
     if (params.size() > 0)
@@ -970,23 +969,6 @@ static UniValue setgenerate(const JSONRPCRequest& request)
         nGenProcLimit = params[1].get_int();
         if (nGenProcLimit == 0)
             fGenerate = false;
-
-        if(params.size() > 2)
-        {
-            if(params[2].get_str() == "false") {
-                SetTPoSMinningParams(false, uint256());
-                return std::string("Minting stopped");
-            }
-            else if (params.size() > 3 && params[2].get_str() == "true") {
-                uint256 tposTxId = ParseHashV(params[3], "parameter 4");
-
-                if(tposTxId.IsNull())
-                    throw JSONRPCError(RPC_INTERNAL_ERROR, "Parsing error, one of txids is incorrect");
-
-                SetTPoSMinningParams(true, tposTxId);
-                return std::string("Minting started, tpos contract: ") + tposTxId.ToString();
-            }
-        }
     }
 
     GenerateVESTXs(fGenerate, nGenProcLimit, Params(), *g_connman);
@@ -1002,7 +984,7 @@ static const CRPCCommand commands[] =
     { "mining",             "prioritisetransaction",  &prioritisetransaction,  {"txid","dummy","fee_delta"} },
     { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
     { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
-    { "mining",             "setgenerate",            &setgenerate,            {"generate", "genproclimit", "staking", "tposID"} },
+    { "mining",             "setgenerate",            &setgenerate,            {"generate", "genproclimit", "staking"} },
 
 
     { "generating",         "generatetoaddress",      &generatetoaddress,      {"nblocks","address","maxtries"} },

@@ -93,7 +93,6 @@ public:
         consensus.nStakeMinAge = 10 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
         consensus.nCoinbaseMaturity = 20;
-        consensus.nTPoSContractSignatureDeploymentTime = NEVER;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1080;

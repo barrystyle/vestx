@@ -1,79 +1,66 @@
 #include <blocksigner.h>
-#include <tpos/tposutils.h>
-#include <tpos/activemerchantnode.h>
 #include <keystore.h>
 #include <primitives/block.h>
 #include <utilstrencodings.h>
 #include <messagesigner.h>
 
-static CPubKey::InputScriptType GetScriptTypeFromDestination(const CTxDestination &dest)
-{
-    if (boost::get<CKeyID>(&dest)) {
-        return CPubKey::InputScriptType::SPENDP2PKH;
-    }
-    if (boost::get<WitnessV0KeyHash>(&dest)) {
-        return CPubKey::InputScriptType::SPENDWITNESS;
-    }
-    if (boost::get<CScriptID>(&dest)) {
-        return CPubKey::InputScriptType::SPENDP2SHWITNESS;
-    }
-    return CPubKey::InputScriptType::SPENDUNKNOWN;
-}
-
-CBlockSigner::CBlockSigner(CBlock &block, const CKeyStore *keystore, const TPoSContract &contract) :
+CBlockSigner::CBlockSigner(CBlock &block, const CKeyStore *keystore) :
     refBlock(block),
-    refKeystore(keystore),
-    refContract(contract)
+    refKeystore(keystore)
 {
 
 }
 
 bool CBlockSigner::SignBlock()
 {
-    CKey keySecret;
-    CPubKey::InputScriptType scriptType;
+    std::vector<std::vector<unsigned char>> vSolutions;
+    txnouttype whichType;
 
-    // avoid compiler warnings regarding uninit variables
-    CTxDestination destination;
-    scriptType = GetScriptTypeFromDestination(destination);
+    CKey keySecret;
 
     if(refBlock.IsProofOfStake())
     {
         const CTxOut& txout = refBlock.vtx[1]->vout[1];
 
-        if(!ExtractDestination(txout.scriptPubKey, destination))
+        if (!Solver(txout.scriptPubKey, whichType, vSolutions))
+            return false;
+
+        CKeyID keyID;
+
+        if (whichType == TX_PUBKEYHASH)
         {
-            return error("Failed to extract destination while signing: %s\n", txout.ToString());
+            keyID = CKeyID(uint160(vSolutions[0]));
+        }
+        else if(whichType == TX_PUBKEY)
+        {
+            keyID = CPubKey(vSolutions[0]).GetID();
         }
 
-        if(refBlock.IsTPoSBlock())
-        {
-            CKeyID merchantKeyID;
-            if(!refContract.merchantAddress.GetKeyID(merchantKeyID))
-                return error("CBlockSigner::SignBlock() : merchant address is not P2PKH, critical error, can't accept.");
-
-            if(merchantKeyID != activeMerchantnode.pubKeyMerchantnode.GetID())
-                return error("CBlockSigner::SignBlock() : contract address is different from merchantnode address, won't sign.");
-
-            scriptType = CPubKey::InputScriptType::SPENDP2PKH;
-
-            keySecret = activeMerchantnode.keyMerchantnode;
+        if (!refKeystore->GetKey(keyID, keySecret))
+            return false;
         }
-        else
-        {
-            auto keyid = GetKeyForDestination(*refKeystore, destination);
-            if (keyid.IsNull()) {
-                return error("CBlockSigner::SignBlock() : failed to get key for destination, won't sign.");
-            }
-            if (!refKeystore->GetKey(keyid, keySecret)) {
-                return error("CBlockSigner::SignBlock() : Private key for address %s not known", EncodeDestination(destination));
-            }
+    else
+    {
+        const CTxOut& txout = refBlock.vtx[0]->vout[0];
 
-            scriptType = GetScriptTypeFromDestination(destination);
+        if (!Solver(txout.scriptPubKey, whichType, vSolutions))
+            return false;
+
+        CKeyID keyID;
+
+        if (whichType == TX_PUBKEYHASH)
+        {
+            keyID = CKeyID(uint160(vSolutions[0]));
         }
+        else if(whichType == TX_PUBKEY)
+        {
+            keyID = CPubKey(vSolutions[0]).GetID();
+        }
+
+        if (!refKeystore->GetKey(keyID, keySecret))
+            return false;
     }
-
-    return CHashSigner::SignHash(refBlock.IsTPoSBlock() ? refBlock.GetTPoSHash() : refBlock.GetHash(), keySecret, scriptType, refBlock.vchBlockSig);
+    return keySecret.SignCompact(refBlock.GetHash(), refBlock.vchBlockSig);
 }
 
 bool CBlockSigner::CheckBlockSignature() const
@@ -90,22 +77,15 @@ bool CBlockSigner::CheckBlockSignature() const
 
     if(!ExtractDestination(txout.scriptPubKey, destination))
     {
-        return error("CBlockSigner::CheckBlockSignature() : failed to extract destination from script: %s", txout.scriptPubKey.ToString());
+        return false;
     }
 
-    auto hashMessage = refBlock.IsTPoSBlock() ? refBlock.GetTPoSHash() : refBlock.GetHash();
-    if(refBlock.IsProofOfStake())
-    {
-        if(refBlock.IsTPoSBlock())
-        {
-            destination = refContract.merchantAddress.Get();
-        }
-    }
-    else
-    {
+    auto hashMessage = refBlock.GetHash();
+    if(!refBlock.IsProofOfStake()) {
         return true;
     }
 
     std::string strError;
     return CHashSigner::VerifyHash(hashMessage, destination, refBlock.vchBlockSig, strError);
+
 }

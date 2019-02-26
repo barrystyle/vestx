@@ -50,16 +50,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <messagesigner.h>
-#include <tpos/activemerchantnode.h>
 #include <masternodeconfig.h>
-#include <tpos/merchantnodeconfig.h>
 #include <activemasternode.h>
 #include <instantx.h>
 #include <wallet/wallet.h>
 #include <net_processing_vestx.h>
 #include <masternodeman.h>
 #include <masternode-payments.h>
-#include <tpos/merchantnodeman.h>
 #include <netfulfilledman.h>
 #include <governance/governance.h>
 #include <flat-database.h>
@@ -218,25 +215,24 @@ static bool LoadExtensionsDataCaches()
 
     CFlatDB<CMasternodeMan> flatdb1(strDBName, "magicMasternodeCache");
 
-    // fail silently, if this isnt found; we're just going to regenerate it anyway?
-    // if(!flatdb1.Load(mnodeman)) {
-    //    return InitError(_("Failed to load masternode cache from") + "\n" + (pathDB / strDBName).string());
-    // }
+    if(!flatdb1.Load(mnodeman)) {
+       return InitError(_("Failed to load masternode cache from") + "\n" + (pathDB / strDBName).string());
+    }
 
     if(mnodeman.size()) {
         strDBName = "mnpayments.dat";
         uiInterface.InitMessage(_("Loading masternode payment cache..."));
         CFlatDB<CMasternodePayments> flatdb2(strDBName, "magicMasternodePaymentsCache");
-        // if(!flatdb2.Load(mnpayments)) {
-        //    return InitError(_("Failed to load masternode payments cache from") + "\n" + (pathDB / strDBName).string());
-        // }
+        if(!flatdb2.Load(mnpayments)) {
+           return InitError(_("Failed to load masternode payments cache from") + "\n" + (pathDB / strDBName).string());
+        }
 
         strDBName = "governance.dat";
         uiInterface.InitMessage(_("Loading governance cache..."));
         CFlatDB<CGovernanceManager> flatdb3(strDBName, "magicGovernanceCache");
-        // if(!flatdb3.Load(governance)) {
-        //    return InitError(_("Failed to load governance cache from") + "\n" + (pathDB / strDBName).string());
-        // }
+        if(!flatdb3.Load(governance)) {
+           return InitError(_("Failed to load governance cache from") + "\n" + (pathDB / strDBName).string());
+        }
         governance.InitOnLoad();
     } else {
         uiInterface.InitMessage(_("Masternode cache is empty, skipping payments and governance cache..."));
@@ -245,14 +241,9 @@ static bool LoadExtensionsDataCaches()
     strDBName = "netfulfilled.dat";
     uiInterface.InitMessage(_("Loading fulfilled requests cache..."));
     CFlatDB<CNetFulfilledRequestManager> flatdb4(strDBName, "magicFulfilledCache");
-    // if(!flatdb4.Load(netfulfilledman)) {
-    //    return InitError(_("Failed to load fulfilled requests cache from") + "\n" + (pathDB / strDBName).string());
-    // }
-
-    CFlatDB<CMerchantnodeMan> flatdb5("merchantnodecache.dat", "magicMerchantnodeCache");
-    // if(!flatdb5.Load(merchantnodeman)) {
-    //    return InitError(_("Failed to load merchantnode cache from") + "\n" + (pathDB / strDBName).string());
-    // }
+    if(!flatdb4.Load(netfulfilledman)) {
+       return InitError(_("Failed to load fulfilled requests cache from") + "\n" + (pathDB / strDBName).string());
+    }
 
     return true;
 }
@@ -268,8 +259,6 @@ static void StoreExtensionsDataCaches()
     flatdb3.Dump(governance);
     CFlatDB<CNetFulfilledRequestManager> flatdb4("netfulfilled.dat", "magicFulfilledCache");
     flatdb4.Dump(netfulfilledman);
-    CFlatDB<CMerchantnodeMan> flatdb5("merchantnodecache.dat", "magicMerchantnodeCache");
-    flatdb5.Dump(merchantnodeman);
 }
 
 void Shutdown()
@@ -607,10 +596,6 @@ void SetupServerArgs()
     gArgs.AddArg("-mnconflock=<n>", "Lock masternodes from masternode configuration file (default: %u)", false, OptionsCategory::MASTERNODE);
     gArgs.AddArg("-masternodeprivkey=<n>", "Set the masternode private key", false, OptionsCategory::MASTERNODE);
     gArgs.AddArg("-clearmncache", "Clears mncache on startup", false, OptionsCategory::MASTERNODE);
-
-    gArgs.AddArg("-merchantnode=<n>", "Enable the client to act as a merchantnode (0-1, default: false", false, OptionsCategory::MERCHANTNODE);
-    gArgs.AddArg("-merchantnodeprivkey=<n>", "Set the masternode private key", false, OptionsCategory::MERCHANTNODE);
-    gArgs.AddArg("-merchantnodeconf=<file>", "Specify merchantnode configuration file (default: merchantnode.conf)", false, OptionsCategory::MERCHANTNODE);
 
 #if HAVE_DECL_DAEMON
     gArgs.AddArg("-daemon", "Run in the background as a daemon and accept commands", false, OptionsCategory::OPTIONS);
@@ -1332,24 +1317,15 @@ bool AppInitPrivateSend()
         return false;
     }
 
-    if(!merchantnodeConfig.read(strErr)) {
-        LogPrintf("Error reading merchantnode configuration file: %s\n", strErr.c_str());
-        return false;
-    }
-
     fMasterNode = gArgs.GetBoolArg("-masternode", false);
-    fMerchantNode = gArgs.GetBoolArg("-merchantnode", false);
-    // TODO: masternode should have no wallet
-
-    //    if((fMasterNode || masternodeConfig.getCount() > 0) && fTxIndex == false) {
     if((fMasterNode || masternodeConfig.getCount() > 0) && !g_txindex) {
         return InitError("Enabling Masternode support requires turning on transaction indexing."
                          "Please add txindex=1 to your configuration and start with -reindex");
     }
 
     if(fMasterNode) {
-        LogPrintf("MASTERNODE:\n");
 
+        LogPrintf("MASTERNODE:\n");
         std::string strMasterNodePrivKey = gArgs.GetArg("-masternodeprivkey", "");
         if(!strMasterNodePrivKey.empty()) {
             if(!CMessageSigner::GetKeysFromSecret(strMasterNodePrivKey, activeMasternode.keyMasternode, activeMasternode.pubKeyMasternode))
@@ -1358,20 +1334,6 @@ bool AppInitPrivateSend()
             LogPrintf("  pubKeyMasternode: %s\n", activeMasternode.pubKeyMasternode.GetID().ToString());
         } else {
             return InitError(_("You must specify a masternodeprivkey in the configuration. Please see documentation for help."));
-        }
-    }
-
-    if(fMerchantNode) {
-        LogPrintf("MERCHANTNODE:\n");
-
-        std::string strMerchantNodePrivKey = gArgs.GetArg("-merchantnodeprivkey", "");
-        if(!strMerchantNodePrivKey.empty()) {
-            if(!CMessageSigner::GetKeysFromSecret(strMerchantNodePrivKey, activeMerchantnode.keyMerchantnode, activeMerchantnode.pubKeyMerchantnode))
-                return InitError(_("Invalid merchantnodeprivkey. Please see documenation."));
-
-            LogPrintf("  pubKeyMerchantnode: %s\n", activeMerchantnode.pubKeyMerchantnode.GetID().ToString());
-        } else {
-            return InitError(_("You must specify a merchantnodeprivkey in the configuration. Please see documentation for help."));
         }
     }
 

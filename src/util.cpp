@@ -608,8 +608,6 @@ std::string ArgsManager::GetHelpMessage()
             usage += HelpMessageGroup("Register Commands:"); break;
         case OptionsCategory::MASTERNODE:
             usage += HelpMessageGroup("Masternodes options:"); break;
-        case OptionsCategory::MERCHANTNODE:
-            usage += HelpMessageGroup("Merchantnode options:"); break;
         default:
             break;
         }
@@ -818,16 +816,6 @@ fs::path GetConfigFile(const std::string& confPath)
 fs::path GetMasternodeConfigFile()
 {
     boost::filesystem::path pathConfigFile(gArgs.GetArg("-mnconf", "masternode.conf"));
-    if (!pathConfigFile.is_complete())
-        return fs::absolute(pathConfigFile, GetDataDir());
-
-
-    return pathConfigFile;
-}
-
-fs::path GetMerchantnodeConfigFile()
-{
-    boost::filesystem::path pathConfigFile(gArgs.GetArg("-merchantnodeconf", "merchantnode.conf"));
     if (!pathConfigFile.is_complete())
         return fs::absolute(pathConfigFile, GetDataDir());
 

@@ -235,28 +235,6 @@ public:
         }
         return std::move(pending);
     }
-    std::unique_ptr<PendingWalletTx> createTPoSContractTransaction(CTxDestination tpos_address,
-            CTxDestination merchant_address,
-            int merchant_commission,
-            std::string& fail_reason) override
-    {
-        LOCK2(cs_main, m_wallet.cs_wallet);
-        auto pending = MakeUnique<PendingWalletTxImpl>(m_wallet);
-        if(!TPoSUtils::CreateTPoSTransaction(&m_wallet, pending->m_tx, pending->m_key, tpos_address, merchant_address, merchant_commission, fail_reason)) {
-            return {};
-        }
-        return std::move(pending);
-    }
-    std::unique_ptr<PendingWalletTx> createCancelContractTransaction(const TPoSContract &contract,
-            std::string& fail_reason) override
-    {
-        LOCK2(cs_main, m_wallet.cs_wallet);
-        auto pending = MakeUnique<PendingWalletTxImpl>(m_wallet);
-        if(!TPoSUtils::CreateCancelContractTransaction(&m_wallet, pending->m_tx, pending->m_key, contract, fail_reason)) {
-            return {};
-        }
-        return std::move(pending);
-    }
     bool transactionCanBeAbandoned(const uint256& txid) override { return m_wallet.TransactionCanBeAbandoned(txid); }
     bool abandonTransaction(const uint256& txid) override
     {
@@ -316,11 +294,6 @@ public:
         return result;
     }
 
-    const std::map<uint256, TPoSContract> &getOwnerContracts() const override
-    {
-        return m_wallet.tposOwnerContracts;
-    }
-
     CAmount getStakeSplitThreshold() const override
     {
         return m_wallet.nStakeSplitThreshold;
@@ -367,14 +340,6 @@ public:
         }
         return {};
     }
-
-    bool getTPoSPayments(const CTransactionRef &tx, CAmount &stakeAmount, CAmount &commissionAmount,
-                                     CTxDestination &tposAddress, CTxDestination &merchantAddress) override
-    {
-        LOCK2(::cs_main, m_wallet.cs_wallet);
-        return TPoSUtils::GetTPoSPayments(&m_wallet, tx, stakeAmount, commissionAmount, tposAddress, merchantAddress);
-    }
-
 
     WalletBalances getBalances() override
     {
