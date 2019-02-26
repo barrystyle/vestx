@@ -19,6 +19,8 @@ struct SeedSpec6 {
     uint16_t port;
 };
 
+#define NEVER 4294967295
+
 typedef std::map<int, uint256> MapCheckpoints;
 
 struct CCheckpointData {
