@@ -44,7 +44,6 @@ ClientModel::ClientModel(interfaces::Node& node, OptionsModel *_optionsModel, QO
     m_node(node),
     optionsModel(_optionsModel),
     cachedMasternodeCountString(""),
-    cachedMerchantnodeCountString(""),
     peerTableModel(0),
     banTableModel(0),
     pollTimer(0)

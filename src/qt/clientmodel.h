@@ -54,11 +54,9 @@ public:
     PeerTableModel *getPeerTableModel();
     BanTableModel *getBanTableModel();
 
-
     //! Return number of connections, default is in- and outbound (total)
     int getNumConnections(unsigned int flags = CONNECTIONS_ALL) const;
     QString getMasternodeCountString() const;
-    QString getMerchantnodeCountString() const;
     int getHeaderTipHeight() const;
     int64_t getHeaderTipTime() const;
 
@@ -94,7 +92,6 @@ private:
     PeerTableModel *peerTableModel;
     BanTableModel *banTableModel;
     QString cachedMasternodeCountString;
-    QString cachedMerchantnodeCountString;
 
     QTimer *pollTimer;
     QTimer *pollMnTimer;
@@ -105,7 +102,6 @@ private:
 Q_SIGNALS:
     void numConnectionsChanged(int count);
     void strMasternodesChanged(const QString &strMasternodes);
-    void strMerchantnodesChanged(const QString &strMasternodes);
     void numBlocksChanged(int count, const QDateTime& blockDate, double nVerificationProgress, bool header);
     void additionalDataSyncProgressChanged(double nSyncProgress);
     void mempoolSizeChanged(long count, size_t mempoolSizeInBytes);

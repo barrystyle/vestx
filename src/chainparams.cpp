@@ -88,7 +88,6 @@ public:
         consensus.nPowTargetSpacing = 3 * 60;
         consensus.nPosTargetSpacing = consensus.nPowTargetSpacing;
         consensus.nPosTargetTimespan = consensus.nPowTargetTimespan;
-        consensus.nMerchantnodeMinimumConfirmations = 1;
         consensus.nMasternodeMinimumConfirmations = 15;
         consensus.nStakeMinAge = 10 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
@@ -146,9 +145,7 @@ public:
 	{
           genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
 	}
-
         consensus.hashGenesisBlock = genesis.GetHash();
-        // vSeeds.emplace_back("autoseeds.vestxseed.xyz");
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,76);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,16);
@@ -187,150 +184,17 @@ public:
     }
 };
 
-/**
+/*
  * Testnet (v3)
  */
 class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
         strNetworkID = "test";
-        consensus.nLastPoWBlock = 75;
-        consensus.nSubsidyHalvingInterval = 10000;
-        consensus.nFirstBlocksEmpty = 20;
-        consensus.nMasternodePaymentsStartBlock = 4010; // not true, but it's ok as long as it's less then nMasternodePaymentsIncreaseBlock
-        consensus.nMasternodePaymentsIncreaseBlock = 4030;
-        consensus.nMasternodePaymentsIncreasePeriod = 10;
-        consensus.nInstantSendKeepLock = 6;
-        consensus.nBudgetPaymentsStartBlock = 1000;
-        consensus.nBudgetPaymentsCycleBlocks = 50;
-        consensus.nBudgetPaymentsWindowBlocks = 10;
-        consensus.nBudgetProposalEstablishingTime = 60*20;
-        consensus.nSuperblockStartBlock = 1010; // NOTE: Should satisfy nSuperblockStartBlock > nBudgetPeymentsStartBlock
-        consensus.nSuperblockCycle = 24; // Superblocks can be issued hourly on testnet
-        consensus.nGovernanceMinQuorum = 1;
-        consensus.nGovernanceFilterElements = 500;
-        consensus.BIP34Height = consensus.nLastPoWBlock;
-        consensus.BIP34Hash = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
-        consensus.BIP65Height = 0;
-        consensus.BIP66Height = 0;
-        consensus.powLimit = uint256S("00000fffff000000000000000000000000000000000000000000000000000000");
-        consensus.nPowTargetTimespan = 24 * 60 * 60; // VESTX: 1 day
-        consensus.nPowTargetSpacing = 1 * 60; // VESTX: 1 minutes
-        consensus.nPosTargetSpacing = 1 * 60; // PoSW: 1 minutes
-        consensus.nPosTargetTimespan = 60 * 40;
-        consensus.fPowAllowMinDifficultyBlocks = false;
-        consensus.nMasternodeMinimumConfirmations = 1;
-        consensus.nMerchantnodeMinimumConfirmations = 1;
-        consensus.fPowNoRetargeting = false;
-        consensus.nStakeMinAge = 60 * 60;
-        consensus.nStakeMaxAge = 60 * 60 * 24; // one day
-        consensus.nCoinbaseMaturity = 20;
-        consensus.nTPoSContractSignatureDeploymentTime = 1522782000;
-        consensus.nRuleChangeActivationThreshold = 30; // 75% for testchains
-        consensus.nMinerConfirmationWindow = 40; // nPowTargetTimespan / nPowTargetSpacing
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
-
-//        // Deployment of BIP68, BIP112, and BIP113.
-//        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-//        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 1456790400; // March 1st, 2016
-//        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = 1493596800; // May 1st, 2017
-
-        // Deployment of SegWit (BIP141, BIP143, and BIP147)
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 1533004200; // June 31 2018 @ 02:30 hours UTC
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 1560284399; // June 11 2019
-
-        // Deployment of BIP68, BIP112, and BIP113.
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE; // March 1st, 2016
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // May 1st, 2017
-
-//        // Deployment of SegWit (BIP141, BIP143, and BIP147)
-//        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
-//        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE; // May 1st 2016
-//        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT; // May 1st 2017
-
-        // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x0");
-
-        // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x0000000004f5aef732d572ff514af99a995702c92e4452c7af10858231668b1f"); //1135275
-
-        pchMessageStart[0] = 0xce;
-        pchMessageStart[1] = 0xe2;
-        pchMessageStart[2] = 0xca;
-        pchMessageStart[3] = 0xff;
-        nDefaultPort = 29999;
-        nPruneAfterHeight = 1000;
-
-        // genesis routine
-        uint32_t nTime = 1550490001;
-        uint32_t nNonce = 0;
-        if (nNonce == 0)
-        {
-          while (UintToArith256(genesis.GetHash()) > UintToArith256(consensus.powLimit))
-          {
-                  nNonce++;
-                  if (nNonce % 1024 == 0) printf("\rnonce %08x", nNonce);
-                  genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
-          }
-          printf("\ngenesis is %s\n", genesis.ToString().c_str());
-        }
-        else
-        {
-          genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
-        }
-
-        consensus.hashGenesisBlock = genesis.GetHash();
-
-        vFixedSeeds.clear();
-        vSeeds.clear();
-        // nodes with support for servicebits filtering should be at the top
-//        vSeeds.emplace_back("testnet-seed.vestx.jonasschnelli.ch");
-//        vSeeds.emplace_back("seed.tvestx.petertodd.org");
-//        vSeeds.emplace_back("seed.testnet.vestx.sprovoost.nl");
-//        vSeeds.emplace_back("testnet-seed.bluematt.me"); // Just a static list of stable node(s), only supports x9
-
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,19);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
-        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
-        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
-
-        bech32_hrp = "tb";
-
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
-    vFixedSeeds.clear();
-
-        fDefaultConsistencyChecks = false;
-        fRequireStandard = false;
-        fMineBlocksOnDemand = false;
-
-        nPoolMaxTransactions = 3;
-        nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
-        strSporkPubKey = "0209c1fb78849b929732cbda125bbb905ffc01aeffb5333badf20a9aef2d539b17";
-
-        checkpointData = {
-            {
-                {0, uint256S("0000090dda92f4e2f31c0bf7630ff4e15f46b6d1813d64b3ef4f2ea300a0f0cc")},
-            }
-        };
-
-        chainTxData = ChainTxData{
-            // Data as of block 000000000000033cfa3c975eb83ecf2bb4aaedf68e6d279f6ed2b427c64caff9 (height 1260526)
-            1516111682,
-            0,
-            0.09
-        };
-
-        /* enable fallback fee on testnet */
-        m_fallback_fee_enabled = true;
     }
 };
 
-/**
+/*
  * Regression test
  */
 class CRegTestParams : public CChainParams {
