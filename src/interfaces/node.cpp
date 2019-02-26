@@ -28,7 +28,6 @@
 #include <validation.h>
 #include <warnings.h>
 #include <masternodeman.h>
-#include <tpos/merchantnodeman.h>
 
 #if defined(HAVE_CONFIG_H)
 #include <config/vestx-config.h>
@@ -169,11 +168,6 @@ class NodeImpl : public Node
     MasternodeMerchantnodeCountInfo getNumMasternodes() override
     {
         MasternodeMerchantnodeCountInfo mnCount(mnodeman.size(), mnodeman.CountEnabled(PROTOCOL_VERSION), mnodeman.CountEnabled());
-        return mnCount;
-    }
-    MasternodeMerchantnodeCountInfo getNumMerchantnodes() override
-    {
-        MasternodeMerchantnodeCountInfo mnCount(merchantnodeman.size(), merchantnodeman.CountEnabled(PROTOCOL_VERSION), merchantnodeman.CountEnabled());
         return mnCount;
     }
     int64_t getLastBlockTime() override

@@ -11,7 +11,6 @@
 #include <script/standard.h>           // For CTxDestination
 #include <support/allocators/secure.h> // For SecureString
 #include <ui_interface.h>              // For ChangeType
-#include <tpos/tposutils.h>            // For TPoSContract
 
 #include <functional>
 #include <map>
@@ -143,16 +142,6 @@ public:
         CAmount& fee,
         std::string& fail_reason) = 0;
 
-    //! Create tpos contract transaction.
-    virtual std::unique_ptr<PendingWalletTx> createTPoSContractTransaction(CTxDestination tpos_address,
-        CTxDestination merchant_address,
-        int merchant_commission,
-        std::string& fail_reason) = 0;
-
-    //! Create cancel tpos contract transaction.
-    virtual std::unique_ptr<PendingWalletTx> createCancelContractTransaction(const TPoSContract &contract,
-        std::string& fail_reason) = 0;
-
     //! Return whether transaction can be abandoned.
     virtual bool transactionCanBeAbandoned(const uint256& txid) = 0;
 
@@ -189,8 +178,6 @@ public:
     //! Get list of all wallet transactions.
     virtual std::vector<WalletTx> getWalletTxs() = 0;
 
-    virtual const std::map<uint256, TPoSContract> &getOwnerContracts() const = 0;
-
     virtual CAmount getStakeSplitThreshold() const = 0;
 
     //! Try to get updated status for a particular transaction, if possible without blocking.
@@ -206,9 +193,6 @@ public:
         bool& in_mempool,
         int& num_blocks,
         int64_t& adjusted_time) = 0;
-
-    virtual bool getTPoSPayments(const CTransactionRef &tx, CAmount &stakeAmount, CAmount &commissionAmount,
-                                 CTxDestination &tposAddress, CTxDestination &merchantAddress) = 0;
 
     //! Get balances.
     virtual WalletBalances getBalances() = 0;

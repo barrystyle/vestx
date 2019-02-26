@@ -146,9 +146,6 @@ public:
     //! Get num of masternodes
     virtual MasternodeMerchantnodeCountInfo getNumMasternodes() = 0;
 
-    //! Get num of masternodes
-    virtual MasternodeMerchantnodeCountInfo getNumMerchantnodes() = 0;
-
     //! Get last block time.
     virtual int64_t getLastBlockTime() = 0;
 

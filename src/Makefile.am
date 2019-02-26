@@ -183,12 +183,6 @@ BITCOIN_CORE_H = \
   timedata.h \
   torcontrol.h \
   txdb.h \
-  tpos/tposutils.h \
-  tpos/activemerchantnode.h \
-  tpos/merchantnodeman.h \
-  tpos/merchantnode.h \
-  tpos/merchantnode-sync.h \
-  tpos/merchantnodeconfig.h \
   txmempool.h \
   ui_interface.h \
   undo.h \
@@ -273,7 +267,6 @@ libvestx_server_a_SOURCES = \
   rpc/misc.cpp \
   rpc/net.cpp \
   rpc/masternode.cpp \
-  rpc/merchantnode.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
   rpc/vestxmisc.cpp \
@@ -284,12 +277,6 @@ libvestx_server_a_SOURCES = \
   torcontrol.cpp \
   txdb.cpp \
   txmempool.cpp \
-  tpos/tposutils.cpp \
-  tpos/activemerchantnode.cpp \
-  tpos/merchantnode.cpp \
-  tpos/merchantnodeman.cpp \
-  tpos/merchantnode-sync.cpp \
-  tpos/merchantnodeconfig.cpp \
   ui_interface.cpp \
   validation.cpp \
   validationinterface.cpp \

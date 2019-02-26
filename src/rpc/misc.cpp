@@ -23,12 +23,8 @@
 #include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>
 #include <wallet/walletdb.h>
-#include <tpos/merchantnode-sync.h>
 #include <masternode-sync.h>
 #include <miner.h>
-#include <tpos/merchantnode.h>
-#include <tpos/merchantnodeman.h>
-#include <tpos/activemerchantnode.h>
 #endif
 #include <warnings.h>
 
@@ -482,7 +478,6 @@ UniValue getstakingstatus(const JSONRPCRequest& request)
             "  \"enoughcoins\": true|false,        (boolean) if available coins are greater than reserve balance\n"
             "  \"mnsync\": true|false,             (boolean) if masternode data is synced\n"
             "  \"staking status\": true|false,     (boolean) if the wallet is staking or not\n"
-            "  \"staking tpos txid\" ,             (string)  if the wallet is tposing or not\n"
             "}\n"
             "\nExamples:\n" +
             HelpExampleCli("getstakingstatus", "") + HelpExampleRpc("getstakingstatus", ""));
@@ -498,60 +493,13 @@ UniValue getstakingstatus(const JSONRPCRequest& request)
         obj.push_back(Pair("enoughcoins", pwalletMain->GetBalance() > 0));
     }
     obj.push_back(Pair("mnsync", masternodeSync.IsSynced()));
-    obj.push_back(Pair("merchantsync", merchantnodeSync.IsSynced()));
 
     bool nStaking = false;
 
     if (nLastCoinStakeSearchInterval > 0)
         nStaking = true;
 
-
     obj.push_back(Pair("staking status", nStaking));
-
-    bool isTPoS = false;
-    uint256 txId;
-    std::tie(isTPoS, txId) = GetTPoSMinningParams();
-
-    std::string tposStatus = "none";
-    if(isTPoS)
-    {
-        auto helper = [&txId, &tposStatus] {
-            TPoSContract contract;
-            if(!TPoSUtils::CheckContract(txId, contract, true, true))
-            {
-                tposStatus = "Failed to find tpos contract, probably spent";
-                return false;
-            }
-
-            CMerchantnode merchantNode;
-            merchantnodeman.Get(activeMerchantnode.pubKeyMerchantnode, merchantNode);
-
-            if(!merchantnodeman.Get(activeMerchantnode.pubKeyMerchantnode, merchantNode))
-            {
-                tposStatus = "Merchantnode is not available in the list";
-                return false;
-            }
-
-            if(!merchantNode.IsValidForPayment())
-            {
-                tposStatus = "Merchantnode is not valid for payment";
-                return false;
-            }
-
-            auto merchantnodePayee = CBitcoinAddress(activeMerchantnode.pubKeyMerchantnode.GetID());
-
-            if(contract.merchantAddress != merchantnodePayee)
-            {
-                tposStatus = "Merchantnode is not configured for contract: " + txId.ToString();
-            }
-
-            return true;
-        };
-
-        isTPoS = helper();
-    }
-
-    obj.push_back(Pair("staking tpos txid", isTPoS ? txId.ToString() : tposStatus));
 
     return obj;
 }

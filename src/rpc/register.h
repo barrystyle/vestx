@@ -22,7 +22,6 @@ void RegisterRawTransactionRPCCommands(CRPCTable &tableRPC);
 /** Register VESTX misc RPC commands */
 void RegisterVESTXMiscCommands(CRPCTable &tableRPC);
 void RegisterMasternodeCommands(CRPCTable &tableRPC);
-void RegisterMerchantnodeCommands(CRPCTable &tableRPC);
 void RegisterGovernanceRPCCommands(CRPCTable &tableRPC);
 
 static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
@@ -34,7 +33,6 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     RegisterRawTransactionRPCCommands(t);
     RegisterVESTXMiscCommands(t);
     RegisterMasternodeCommands(t);
-    RegisterMerchantnodeCommands(t);
     RegisterGovernanceRPCCommands(t);
 }
 

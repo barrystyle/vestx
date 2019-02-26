@@ -28,11 +28,6 @@
 #include <wallet/wallet.h>
 #include <blocksigner.h>
 #include <masternode-sync.h>
-#include <tpos/tposutils.h>
-#include <tpos/activemerchantnode.h>
-#include <tpos/merchantnodeman.h>
-#include <tpos/merchantnode.h>
-#include <tpos/merchantnode-sync.h>
 
 #include <algorithm>
 #include <queue>
@@ -48,18 +43,6 @@ uint64_t nLastBlockTx = 0;
 uint64_t nLastBlockWeight = 0;
 int64_t nLastCoinStakeSearchInterval = 0;
 
-struct TPoSParams
-{
-    bool fUseTPoS;
-    uint256 hashTPoSContractTxId;
-} tposParams = {
-    false,
-    uint256()
-};
-
-static CCriticalSection csTPoSParams;
-
-
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
     int64_t nOldTime = pblock->nTime;
@@ -73,6 +56,11 @@ int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParam
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, consensusParams);
 
     return nNewTime - nOldTime;
+}
+
+std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx)
+{
+    return CreateNewBlock(nullptr, scriptPubKeyIn, false, fMineWitnessTx);
 }
 
 BlockAssembler::Options::Options() {
@@ -123,11 +111,6 @@ void BlockAssembler::resetBlock()
     nFees = 0;
 }
 
-std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& scriptPubKeyIn, bool fMineWitnessTx)
-{
-    return CreateNewBlock(nullptr, scriptPubKeyIn, false, {}, fMineWitnessTx);
-}
-
 static bool SignInputsInCoinstake(const SigningProvider &provider, CMutableTransaction &txNew, const std::vector<const CWalletTx*> &vwtxPrev)
 {
     // Sign
@@ -142,7 +125,7 @@ static bool SignInputsInCoinstake(const SigningProvider &provider, CMutableTrans
     return true;
 }
 
-std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, const CScript &scriptPubKeyIn, bool fProofOfStake, const TPoSContract &tposContract, bool fMineWitnessTx)
+std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, const CScript &scriptPubKeyIn, bool fProofOfStake, bool fMineWitnessTx)
 {
     int64_t nTimeStart = GetTimeMicros();
 
@@ -215,16 +198,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, 
             unsigned int nTxNewTime = 0;
             if (wallet->CreateCoinStake(pblock->nBits, blockReward,
                                         coinstakeTx, nTxNewTime,
-                                        tposContract, vwtxPrev, fIncludeWitness))
+                                        vwtxPrev, fIncludeWitness))
             {
                 pblock->nTime = nTxNewTime;
                 coinbaseTx.vout[0].SetEmpty();
                 pblock->vtx.emplace_back(MakeTransactionRef(coinstakeTx));
-
-                if(tposContract.IsValid())
-                {
-                    pblock->hashTPoSContractTx = tposContract.rawTx->GetHash();
-                }
 
                 fStakeFound = true;
             }
@@ -606,51 +584,16 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman,
                 MilliSleep(1000);
             } while (true);
 
-            bool isTPoS = false;
-            uint256 hashTPoSContractTxId;
-            TPoSContract contract;
-
             if(fProofOfStake)
             {
                 if (chainActive.Tip()->nHeight < chainparams.GetConsensus().nLastPoWBlock ||
-                        pwallet->IsLocked() || !masternodeSync.IsSynced() || !merchantnodeSync.IsSynced())
+                        pwallet->IsLocked() || !masternodeSync.IsSynced())
                 {
                     nLastCoinStakeSearchInterval = 0;
                     MilliSleep(5000);
                     continue;
                 }
 
-                LOCK(csTPoSParams);
-
-                isTPoS = tposParams.fUseTPoS;
-                hashTPoSContractTxId = tposParams.hashTPoSContractTxId;
-
-                if(isTPoS)
-                {
-                    auto it = pwallet->tposMerchantContracts.find(hashTPoSContractTxId);
-                    if(it != std::end(pwallet->tposMerchantContracts))
-                        contract = it->second;
-
-                    // check if our merchant node is set, otherwise block won't be accepted.
-                    CMerchantnode merchantNode;
-                    bool isValidForPayment = merchantnodeman.Get(activeMerchantnode.pubKeyMerchantnode, merchantNode);
-
-                    isValidForPayment &= merchantNode.IsValidForPayment();
-                    auto merchantnodePayee = CBitcoinAddress(activeMerchantnode.pubKeyMerchantnode.GetID());
-                    bool isValidContract = contract.merchantAddress == merchantnodePayee;
-                    if(!isValidForPayment || !isValidContract)
-                    {
-                        LogPrintf("Won't tpos, merchant node valid for payment: %d isValidContract: %d\n Contract address: %s, merchantnode address: %s\n",
-                                  isValidForPayment,
-                                  isValidContract,
-                                  contract.merchantAddress.ToString(),
-                                  merchantnodePayee.ToString());
-
-                        nLastCoinStakeSearchInterval = 0;
-                        MilliSleep(10000);
-                        continue;
-                    }
-                }
             }
 
             if(!fProofOfStake && chainActive.Tip()->nHeight >= chainparams.GetConsensus().nLastPoWBlock)
@@ -666,7 +609,7 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman,
             if(!pindexPrev) break;
 
             BlockAssembler assemlber(chainparams);
-            auto pblocktemplate = assemlber.CreateNewBlock(pwallet, coinbaseScript->reserveScript, fProofOfStake, contract, true);
+            auto pblocktemplate = assemlber.CreateNewBlock(pwallet, coinbaseScript->reserveScript, fProofOfStake, true);
             if (!pblocktemplate.get())
             {
                 LogPrintf("XsnMiner -- Failed to find a coinstake\n");
@@ -684,7 +627,7 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman,
             {
                 LogPrintf("CPUMiner : proof-of-stake block found %s \n", pblock->GetHash().ToString().c_str());
 
-                CBlockSigner signer(*pblock, pwallet, contract);
+                CBlockSigner signer(*pblock, pwallet);
 
                 if (!signer.SignBlock()) {
                     LogPrintf("VESTXMiner(): Signing new block failed \n");
@@ -820,17 +763,4 @@ void ThreadStakeMinter(const CChainParams &chainparams, CConnman &connman, CWall
     }
     LogPrintf("ThreadStakeMinter exiting,\n");
 
-}
-
-void SetTPoSMinningParams(bool fUseTPoS, uint256 hashTPoSContractTxId)
-{
-    LOCK(csTPoSParams);
-    tposParams.fUseTPoS = fUseTPoS;
-    tposParams.hashTPoSContractTxId = hashTPoSContractTxId;
-}
-
-std::tuple<bool, uint256> GetTPoSMinningParams()
-{
-    LOCK(csTPoSParams);
-    return std::make_tuple(tposParams.fUseTPoS, tposParams.hashTPoSContractTxId);
 }

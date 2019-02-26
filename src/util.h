@@ -38,7 +38,6 @@
 int64_t GetStartupTime();
 
 extern bool fMasterNode;
-extern bool fMerchantNode;
 extern bool fLiteMode;
 
 const char * const MASTERNODE_CONF_FILENAME_ARG = "-mnconf";
@@ -100,7 +99,6 @@ const fs::path &GetBackupsDir(bool fNetSpecific = true);
 void ClearDatadirCache();
 fs::path GetConfigFile(const std::string& confPath);
 fs::path GetMasternodeConfigFile();
-fs::path GetMerchantnodeConfigFile();
 #ifndef WIN32
 fs::path GetPidFile();
 void CreatePidFile(const fs::path &path, pid_t pid);

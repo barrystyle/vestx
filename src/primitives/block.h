@@ -73,13 +73,11 @@ class CBlock : public CBlockHeader
 {
 public:
     // network and disk
-	uint256 hashTPoSContractTx;
     std::vector<CTransactionRef> vtx;
     std::vector<unsigned char> vchBlockSig;
 
     // memory only
     mutable bool fChecked;
-    mutable CTransactionRef txTPoSContract;
 
     CBlock()
     {
@@ -101,7 +99,6 @@ public:
         if(vtx.size() > 1 && vtx[1]->IsCoinStake())
         {
             READWRITE(vchBlockSig);
-            READWRITE(hashTPoSContractTx);
         }
     }
 
@@ -110,7 +107,6 @@ public:
         CBlockHeader::SetNull();
         vtx.clear();
         fChecked = false;
-		hashTPoSContractTx.SetNull();
 		vchBlockSig.clear();
     }
 
@@ -126,9 +122,7 @@ public:
         return block;
     }
 
-	uint256 GetTPoSHash();
     bool IsProofOfStake() const;
-    bool IsTPoSBlock() const;
     bool IsProofOfWork() const;
 
     std::string ToString() const;

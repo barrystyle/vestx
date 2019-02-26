@@ -44,7 +44,6 @@ ClientModel::ClientModel(interfaces::Node& node, OptionsModel *_optionsModel, QO
     m_node(node),
     optionsModel(_optionsModel),
     cachedMasternodeCountString(""),
-    cachedMerchantnodeCountString(""),
     peerTableModel(0),
     banTableModel(0),
     pollTimer(0)
@@ -98,18 +97,6 @@ QString ClientModel::getMasternodeCountString() const
 
 }
 
-QString ClientModel::getMerchantnodeCountString() const
-{
-    // return tr("Total: %1 (PS compatible: %2 / Enabled: %3) (IPv4: %4, IPv6: %5, TOR: %6)").arg(QString::number((int)merchantnodeman.size()))
-    return tr("Total: %1 (PS compatible: %2 / Enabled: %3)")
-                .arg(QString::number((int)m_node.getNumMerchantnodes().size))
-                .arg(QString::number((int)m_node.getNumMerchantnodes().countEnabledProtVersion))
-                .arg(QString::number((int)m_node.getNumMerchantnodes().countEnabled));
-            // .arg(QString::number((int)merchantnodeman.CountByIP(NET_IPV4)))
-            // .arg(QString::number((int)merchantnodeman.CountByIP(NET_IPV6)))
-    // .arg(QString::number((int)merchantnodeman.CountByIP(NET_TOR)));
-}
-
 int ClientModel::getHeaderTipHeight() const
 {
     if (cachedBestHeaderHeight == -1) {
@@ -149,20 +136,12 @@ void ClientModel::updateTimer()
 void ClientModel::updateMnTimer()
 {
     QString newMasternodeCountString = getMasternodeCountString();
-    QString newMerchantnodeCountString = getMerchantnodeCountString();
 
     if (cachedMasternodeCountString != newMasternodeCountString)
     {
         cachedMasternodeCountString = newMasternodeCountString;
 
         Q_EMIT strMasternodesChanged(cachedMasternodeCountString);
-    }
-
-    if (cachedMerchantnodeCountString != newMerchantnodeCountString)
-    {
-        cachedMerchantnodeCountString = newMerchantnodeCountString;
-
-        Q_EMIT strMerchantnodesChanged(cachedMerchantnodeCountString);
     }
 }
 

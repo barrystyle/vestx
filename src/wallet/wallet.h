@@ -20,7 +20,6 @@
 #include <wallet/coinselection.h>
 #include <wallet/walletdb.h>
 #include <wallet/rpcwallet.h>
-#include <tpos/tposutils.h>
 
 #include <algorithm>
 #include <atomic>
@@ -73,7 +72,6 @@ class CScheduler;
 class CTxMemPool;
 class CBlockPolicyEstimator;
 class CWalletTx;
-class TPoSContract;
 struct FeeCalculation;
 enum class FeeEstimateMode;
 
@@ -715,8 +713,6 @@ private:
     mutable bool fAnonymizableTallyCachedNonDenom;
     mutable std::vector<CompactTallyItem> vecAnonymizableTallyCachedNonDenom;
 
-    std::vector<CWalletTx> tposContractsTxLoadedFromDB;
-
     /**
      * Used to keep track of spent outpoints, and
      * detect and report conflicts (double-spends or
@@ -731,8 +727,6 @@ private:
 
     /* Mark a transaction (and its in-wallet descendants) as conflicting with a particular block. */
     void MarkConflicted(const uint256& hashBlock, const uint256& hashTx);
-
-    bool AddToWalletIfTPoSContract(const CTransactionRef &tx);
 
     void SyncMetaData(std::pair<TxSpends::iterator, TxSpends::iterator>);
 
@@ -790,14 +784,12 @@ private:
                                unsigned int nBits, const CBlock& blockFrom,
                                unsigned int nTxPrevOffset, const CTransactionRef &txPrev,
                                const COutPoint& prevout, unsigned int &nTimeTx,
-                               const TPoSContract &contract, bool fGenerateSegwit, bool fPrintProofOfStake) const;
+                               bool fGenerateSegwit, bool fPrintProofOfStake) const;
 
     void FillCoinStakePayments(CMutableTransaction &transaction,
-                               const TPoSContract &tposContract,
                                const CScript &kernelScript,
                                const COutPoint &stakePrevout, CAmount blockReward) const;
 
-    bool IsTPoSContractSpent(COutPoint outpoint) const;
     bool GetOutpointAndKeysFromOutput(const COutput& out, COutPoint& outpointRet, CPubKey& pubKeyRet, CKey& keyRet);
     void LoadContractsFromDB();
 
@@ -855,8 +847,6 @@ public:
     }
 
     uint64_t nStakeSplitThreshold = 2000;
-    std::map<uint256, TPoSContract> tposOwnerContracts;
-    std::map<uint256, TPoSContract> tposMerchantContracts;
     std::map<uint256, CWalletTx> mapWallet;
     std::list<CAccountingEntry> laccentries;
 
@@ -923,11 +913,6 @@ public:
     void UnlockCoin(const COutPoint& output);
     void UnlockAllCoins();
     void ListLockedCoins(std::vector<COutPoint>& vOutpts) const;
-
-
-    bool LoadTPoSContract(const CWalletTx &walletTx);
-    void LoadTPoSContractFromDB(CWalletTx walletTx);
-    bool RemoveTPoSContract(const uint256 &contractTxId);
 
     /*
      * Rescan abort properties
@@ -1045,7 +1030,7 @@ public:
                            std::string& strFailReason, const CCoinControl& coin_control, bool sign = true, OnTransactionToBeSigned onTxToBeSigned = OnTransactionToBeSigned());
     bool CreateCoinStake(unsigned int nBits, CAmount blockReward,
                          CMutableTransaction& txNew, unsigned int& nTxNewTime,
-                         const TPoSContract &tposContract, std::vector<const CWalletTx *> &vwtxPrev,
+                         std::vector<const CWalletTx *> &vwtxPrev,
                          bool fGenerateSegwit);
     bool CommitTransaction(CTransactionRef tx, mapValue_t mapValue, std::vector<std::pair<std::string, std::string>> orderForm, std::string fromAccount, CReserveKey& reservekey, CConnman* connman, CValidationState& state);
 

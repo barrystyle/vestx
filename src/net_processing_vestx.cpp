@@ -8,10 +8,7 @@
 #include <masternode-sync.h>
 #include <masternode-payments.h>
 #include <governance/governance.h>
-#include <tpos/merchantnode-sync.h>
-#include <tpos/merchantnodeman.h>
 #include <activemasternode.h>
-#include <tpos/activemerchantnode.h>
 #include <instantx.h>
 #include <init.h>
 #include <boost/thread.hpp>
@@ -40,10 +37,7 @@ enum {
     MSG_DSTX,
     MSG_GOVERNANCE_OBJECT,
     MSG_GOVERNANCE_OBJECT_VOTE,
-    MSG_MASTERNODE_VERIFY,
-    MSG_MERCHANTNODE_VERIFY,
-    MSG_MERCHANTNODE_ANNOUNCE,
-    MSG_MERCHANTNODE_PING
+    MSG_MASTERNODE_VERIFY
 };
 }
 
@@ -105,21 +99,9 @@ static const MapSporkHandlers &GetMapGetDataHandlers()
                         }
                         return {};
                     });
-        ADD_HANDLER(MSG_MERCHANTNODE_ANNOUNCE, {
-                        if(merchantnodeman.mapSeenMerchantnodeBroadcast.count(hash)){
-                            return msgMaker.Make(NetMsgType::MERCHANTNODEANNOUNCE, merchantnodeman.mapSeenMerchantnodeBroadcast[hash].second);
-                        }
-                        return {};
-                    });
         ADD_HANDLER(MSG_MASTERNODE_PING, {
                         if(mnodeman.mapSeenMasternodePing.count(hash)) {
                             return msgMaker.Make(NetMsgType::MNPING, mnodeman.mapSeenMasternodePing[hash]);
-                        }
-                        return {};
-                    });
-        ADD_HANDLER(MSG_MERCHANTNODE_PING, {
-                        if(merchantnodeman.mapSeenMerchantnodePing.count(hash)) {
-                            return msgMaker.Make(NetMsgType::MERCHANTNODEPING, merchantnodeman.mapSeenMerchantnodePing[hash]);
                         }
                         return {};
                     });
@@ -146,12 +128,6 @@ static const MapSporkHandlers &GetMapGetDataHandlers()
                         if(mnodeman.mapSeenMasternodeVerification.count(hash)) {
                             return msgMaker.Make(NetMsgType::MNVERIFY, mnodeman.mapSeenMasternodeVerification[hash]);
 
-                        }
-                        return {};
-                    });
-        ADD_HANDLER(MSG_MERCHANTNODE_VERIFY, {
-                        if(merchantnodeman.mapSeenMerchantnodeVerification.count(hash)) {
-                            return msgMaker.Make(NetMsgType::MERCHANTNODEVERIFY, merchantnodeman.mapSeenMerchantnodeVerification[hash]);
                         }
                         return {};
                     });
@@ -182,11 +158,9 @@ void net_processing_vestx::ProcessExtension(CNode *pfrom, const std::string &str
 {
     mnodeman.ProcessMessage(pfrom, strCommand, vRecv, *connman);
     mnpayments.ProcessMessage(pfrom, strCommand, vRecv, *connman);
-    merchantnodeman.ProcessMessage(pfrom, strCommand, vRecv, *connman);
     instantsend.ProcessMessage(pfrom, strCommand, vRecv, *connman);
     sporkManager.ProcessSpork(pfrom, strCommand, vRecv, connman);
     masternodeSync.ProcessMessage(pfrom, strCommand, vRecv);
-    merchantnodeSync.ProcessMessage(pfrom, strCommand, vRecv);
     governance.ProcessMessage(pfrom, strCommand, vRecv, *connman);
 }
 
@@ -211,7 +185,6 @@ void net_processing_vestx::ThreadProcessExtensions(CConnman *pConnman)
 
         // try to sync from all available nodes, one step at a time
         masternodeSync.ProcessTick(connman);
-        merchantnodeSync.ProcessTick(connman);
 
         if(!ShutdownRequested()) {
 
@@ -241,20 +214,6 @@ void net_processing_vestx::ThreadProcessExtensions(CConnman *pConnman)
                 }
             }
 
-            if(merchantnodeSync.IsBlockchainSynced()) {
-
-                merchantnodeman.Check();
-                if(nTick % MERCHANTNODE_MIN_MNP_SECONDS == 15)
-                    activeMerchantnode.ManageState(connman);
-
-                if(nTick % 60 == 0) {
-                    merchantnodeman.ProcessMerchantnodeConnections(connman);
-                    merchantnodeman.CheckAndRemove(connman);
-                }
-                if(fMerchantNode && (nTick % (60 * 5) == 0)) {
-                    merchantnodeman.DoFullVerificationStep(connman);
-                }
-            }
         }
     }
 }
@@ -293,27 +252,20 @@ bool net_processing_vestx::AlreadyHave(const CInv &inv)
 
     case MSG_MASTERNODE_ANNOUNCE:
         return mnodeman.mapSeenMasternodeBroadcast.count(inv.hash) && !mnodeman.IsMnbRecoveryRequested(inv.hash);
-    case MSG_MERCHANTNODE_ANNOUNCE:
-        return merchantnodeman.mapSeenMerchantnodeBroadcast.count(inv.hash) && !merchantnodeman.IsMnbRecoveryRequested(inv.hash);
 
     case MSG_MASTERNODE_PING:
         return mnodeman.mapSeenMasternodePing.count(inv.hash);
-    case MSG_MERCHANTNODE_PING:
-        return merchantnodeman.mapSeenMerchantnodePing.count(inv.hash);
 
     case MSG_DSTX: {
         //        return static_cast<bool>(CPrivateSend::GetDSTX(inv.hash));
         return true;
     }
-
     case MSG_GOVERNANCE_OBJECT:
     case MSG_GOVERNANCE_OBJECT_VOTE:
         return !governance.ConfirmInventoryRequest(inv);
 
     case MSG_MASTERNODE_VERIFY:
         return mnodeman.mapSeenMasternodeVerification.count(inv.hash);
-    case MSG_MERCHANTNODE_VERIFY:
-        return merchantnodeman.mapSeenMerchantnodeVerification.count(inv.hash);
     }
     return true;
 }
@@ -333,9 +285,6 @@ static int MapLegacyToCurrent(int nLegacyType)
     case LegacyInvMsg::MSG_GOVERNANCE_OBJECT: return MSG_GOVERNANCE_OBJECT;
     case LegacyInvMsg::MSG_GOVERNANCE_OBJECT_VOTE: return MSG_GOVERNANCE_OBJECT_VOTE;
     case LegacyInvMsg::MSG_MASTERNODE_VERIFY: return MSG_MASTERNODE_VERIFY;
-    case LegacyInvMsg::MSG_MERCHANTNODE_VERIFY: return MSG_MERCHANTNODE_VERIFY;
-    case LegacyInvMsg::MSG_MERCHANTNODE_ANNOUNCE: return MSG_MERCHANTNODE_ANNOUNCE;
-    case LegacyInvMsg::MSG_MERCHANTNODE_PING: return MSG_MERCHANTNODE_PING;
     }
 
     return nLegacyType;
@@ -356,9 +305,6 @@ static int MapCurrentToLegacy(int nCurrentType)
     case MSG_GOVERNANCE_OBJECT: return LegacyInvMsg::MSG_GOVERNANCE_OBJECT;
     case MSG_GOVERNANCE_OBJECT_VOTE: return LegacyInvMsg::MSG_GOVERNANCE_OBJECT_VOTE;
     case MSG_MASTERNODE_VERIFY: return LegacyInvMsg::MSG_MASTERNODE_VERIFY;
-    case MSG_MERCHANTNODE_VERIFY: return LegacyInvMsg::MSG_MERCHANTNODE_VERIFY;
-    case MSG_MERCHANTNODE_ANNOUNCE: return LegacyInvMsg::MSG_MERCHANTNODE_ANNOUNCE;
-    case MSG_MERCHANTNODE_PING: return LegacyInvMsg::MSG_MERCHANTNODE_PING;
     }
 
     return nCurrentType;

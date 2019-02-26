@@ -43,7 +43,6 @@
 #include <kernel.h>
 #include <masternode-payments.h>
 #include <blocksigner.h>
-#include <tpos/tposutils.h>
 
 #include <future>
 #include <sstream>
@@ -2116,10 +2115,6 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
 
     const auto& coinbaseTransaction = (pindex->nHeight > Params().GetConsensus().nLastPoWBlock ? block.vtx[1] : block.vtx[0]);
 
-    if(block.IsTPoSBlock() && !TPoSUtils::IsMerchantPaymentValid(state, block, pindex->nHeight, expectedReward, pindex->nMint)) {
-        return false;
-    }
-
     if (!IsBlockPayeeValid(coinbaseTransaction, pindex->nHeight, expectedReward, pindex->nMint)) {
         //        mapRejectedBlocks.insert(std::make_pair(block.GetHash(), GetTime()));
         return state.DoS(0, error("ConnectBlock(VESTX): couldn't find masternode or superblock payments"),
@@ -3275,22 +3270,9 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         uint256 hashProofOfStake;
         uint256 hash = block.GetHash();
 
-        TPoSContract contract;
-        if(block.IsTPoSBlock()) {
-            bool fCheckTPoSSignature = block.GetBlockTime() >
-                    Params().GetConsensus().nTPoSContractSignatureDeploymentTime;
-
-            if(!TPoSUtils::CheckContract(block.hashTPoSContractTx, contract, fCheckTPoSSignature, fCheckContractOutpoint)) {
-                state.DoS(100, error("CheckBlock(): check contract failed for tpos block %s\n", hash.ToString().c_str()));
-                return false;
-            }
-
-            block.txTPoSContract = contract.rawTx;
-        }
-
         CBlock blockTmp = block;
 
-        CBlockSigner signer(blockTmp, nullptr, contract);
+        CBlockSigner signer(blockTmp, nullptr);
 
         if(!signer.CheckBlockSignature()) {
             return state.DoS(100, error("CheckBlock(): block signature invalid"),

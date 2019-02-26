@@ -6,6 +6,7 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <chainparams.h>
 #include <db.h>
 #include <kernel.h>
 #include <script/interpreter.h>
@@ -16,7 +17,6 @@
 #include <policy/policy.h>
 #include <init.h>
 #include <validation.h>
-#include <tpos/tposutils.h>
 #include <utiltime.h>
 
 #include <numeric>
@@ -286,7 +286,6 @@ static bool GetKernelStakeModifier(uint256 hashBlockFrom, unsigned int nTimeTx, 
 
 uint256 stakeHash(unsigned int nTimeTx, CDataStream ss, unsigned int prevoutIndex, uint256 prevoutHash, unsigned int nTimeBlockFrom)
 {
-    //PoSW will hash in the transaction hash and the index number in order to make sure each hash is unique
     ss << nTimeBlockFrom << prevoutIndex << prevoutHash << nTimeTx;
     return Hash(ss.begin(), ss.end());
 }
@@ -438,9 +437,7 @@ bool CheckProofOfStake(const CBlock &block, uint256& hashProofOfStake)
         return error("CheckProofOfStake() : INFO: read txPrev failed");
 
     CTxOut prevTxOut = txPrev->vout[txin.prevout.n];
-    //verify signature and script, don't check script if it's tpos block, signature check will happen in different place
-    if (!block.IsTPoSBlock() &&
-            !VerifyScript(txin.scriptSig, prevTxOut.scriptPubKey,
+    if (!VerifyScript(txin.scriptSig, prevTxOut.scriptPubKey,
                           &txin.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS,
                           TransactionSignatureChecker(tx.get(), 0, prevTxOut.nValue)))
     {

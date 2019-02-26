@@ -12,22 +12,12 @@
 
 uint256 CBlockHeader::GetHash() const
 {
-    return HashX11(BEGIN(nVersion), END(nNonce));
-}
-
-uint256 CBlock::GetTPoSHash()
-{
-    return HashX11(BEGIN(nVersion), END(hashTPoSContractTx));
+    return TestHash(BEGIN(nVersion), END(nNonce));
 }
 
 bool CBlock::IsProofOfStake() const
 {
     return (vtx.size() > 1 && vtx[1]->IsCoinStake());
-}
-
-bool CBlock::IsTPoSBlock() const
-{
-    return IsProofOfStake() && !hashTPoSContractTx.IsNull();
 }
 
 bool CBlock::IsProofOfWork() const

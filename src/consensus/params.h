@@ -88,8 +88,6 @@ struct Params {
     int64_t nPowTargetTimespan;
     int64_t nPosTargetSpacing;
     int64_t nPosTargetTimespan;
-    int nPowKGWHeight;
-    int nPowDGWHeight;
     int nLastPoWBlock;
     int nFirstBlocksEmpty;
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }

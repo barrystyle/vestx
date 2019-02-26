@@ -257,21 +257,6 @@ QString TransactionDesc::toHTML(interfaces::Node& node, interfaces::Wallet& wall
         if (r.first == "Message")
             strHTML += "<br><b>" + tr("Message") + ":</b><br>" + GUIUtil::HtmlEscape(r.second, true) + "<br>";
 
-    //
-    // PaymentRequest info:
-    //
-    for (const std::pair<std::string, std::string>& r : orderForm)
-    {
-        if (r.first == "PaymentRequest")
-        {
-            PaymentRequestPlus req;
-            req.parse(QByteArray::fromRawData(r.second.data(), r.second.size()));
-            QString merchant;
-            if (req.getMerchant(PaymentServer::getCertStore(), merchant))
-                strHTML += "<b>" + tr("Merchant") + ":</b> " + GUIUtil::HtmlEscape(merchant) + "<br>";
-        }
-    }
-
     if (wtx.is_coinbase)
     {
         quint32 numBlocksToMaturity = COINBASE_MATURITY +  1;

@@ -18,7 +18,6 @@ class CBlockIndex;
 class CChainParams;
 class CWallet;
 class CScript;
-class TPoSContract;
 class CConnman;
 
 namespace Consensus { struct Params; };
@@ -167,7 +166,7 @@ public:
     std::unique_ptr<CBlockTemplate> CreateNewBlock(CWallet *wallet,
                                                    const CScript& scriptPubKeyIn,
                                                    bool fProofOfStake,
-                                                   const TPoSContract &tposContract, bool fMineWitnessTx);
+                                                   bool fMineWitnessTx);
 
 
 private:
@@ -211,8 +210,5 @@ int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParam
 /** Run the miner threads */
 void GenerateVESTXs(bool fGenerate, int nThreads, const CChainParams& chainparams, CConnman &connman);
 void ThreadStakeMinter(const CChainParams& chainparams, CConnman &connman, CWallet *pwallet);
-
-void SetTPoSMinningParams(bool fUseTPoS, uint256 hashTPoSContractTxId);
-std::tuple<bool, uint256> GetTPoSMinningParams();
 
 #endif // BITCOIN_MINER_H
