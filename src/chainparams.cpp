@@ -64,10 +64,8 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
-        consensus.nLastPoWBlock = 75;
-        consensus.nFirstBlocksEmpty = 20000;
-        consensus.nSubsidyHalvingInterval = 43200;
-        consensus.nMasternodePaymentsStartBlock = 100;
+        consensus.nLastPoWBlock = 750;
+        consensus.nMasternodePaymentsStartBlock = consensus.nLastPoWBlock;
         consensus.nMasternodePaymentsIncreaseBlock = 158000;
         consensus.nMasternodePaymentsIncreasePeriod = 576*30;
         consensus.nInstantSendKeepLock = 24;
@@ -129,7 +127,7 @@ public:
         nMaxReorganizationDepth = 100;
 
 	// genesis routine
-	uint32_t nTime = 1550490000;
+	uint32_t nTime = 1551759000;
 	uint32_t nNonce = 0;
 	if (nNonce == 0)
 	{
@@ -160,7 +158,7 @@ public:
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
-
+        nCollateralLevels = { 10000, 25000, 50000 };
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60;
         strSporkPubKey = "030a2b7fdf1f123f3686ebc00f1226a20275bc785570ef069e2c2d81b61d616e91";
