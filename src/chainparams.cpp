@@ -65,7 +65,7 @@ public:
     CMainParams() {
         strNetworkID = "main";
         consensus.nLastPoWBlock = 750;
-        consensus.nMasternodePaymentsStartBlock = consensus.nLastPoWBlock;
+        consensus.nMasternodePaymentsStartBlock = consensus.nLastPoWBlock + 1;
         consensus.nMasternodePaymentsIncreaseBlock = 158000;
         consensus.nMasternodePaymentsIncreasePeriod = 576*30;
         consensus.nInstantSendKeepLock = 24;
@@ -82,8 +82,8 @@ public:
         consensus.BIP65Height = consensus.nLastPoWBlock;
         consensus.BIP66Height = consensus.nLastPoWBlock;
         consensus.powLimit = uint256S("0000ffff00000000000000000000000000000000000000000000000000000000");
-        consensus.nPowTargetTimespan = 15 * 60;
-        consensus.nPowTargetSpacing = 3 * 60;
+        consensus.nPowTargetTimespan = 3 * 60;
+        consensus.nPowTargetSpacing = 45;
         consensus.nPosTargetSpacing = consensus.nPowTargetSpacing;
         consensus.nPosTargetTimespan = consensus.nPowTargetTimespan;
         consensus.nMasternodeMinimumConfirmations = 15;
@@ -127,8 +127,10 @@ public:
         nMaxReorganizationDepth = 100;
 
 	// genesis routine
-	uint32_t nTime = 1551759000;
-	uint32_t nNonce = 0;
+	uint32_t nTime = 1551771000;
+	uint32_t nNonce = 112569;
+
+#if 0
 	if (nNonce == 0)
 	{
 	  while (UintToArith256(genesis.GetHash()) > UintToArith256(consensus.powLimit))
@@ -143,14 +145,16 @@ public:
 	{
           genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
 	}
-        consensus.hashGenesisBlock = genesis.GetHash();
+#endif
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,76);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,16);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,204);
+        genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
+        consensus.hashGenesisBlock = genesis.GetHash();
+        assert(consensus.hashGenesisBlock == uint256S("000014e6788fe294da86bdbf9af9c9f17a30effb7bd35b0c7a50d6398114358e"));
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,70);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,132);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,198);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
-
         bech32_hrp = "xc";
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
@@ -158,14 +162,14 @@ public:
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
-        nCollateralLevels = { 10000, 25000, 50000 };
+        nCollateralLevels = { 50000 };
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60;
         strSporkPubKey = "030a2b7fdf1f123f3686ebc00f1226a20275bc785570ef069e2c2d81b61d616e91";
 
         checkpointData = {
             {
-                { 0, uint256S("0000000000000000000000000000000000000000000000000000000000000000")},
+                { 0, uint256S("000014e6788fe294da86bdbf9af9c9f17a30effb7bd35b0c7a50d6398114358e")},
             }
         };
 

@@ -247,7 +247,6 @@ static bool GetKernlStakeModifierV03(uint256 hashBlockFrom, unsigned int nTimeTx
     nStakeModifierTime = pindexFrom->GetBlockTime();
     int64_t nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
     const CBlockIndex* pindex = pindexFrom;
-    CBlockIndex* pindexNext = chainActive[pindexFrom->nHeight + 1];
 
     // loop to find the stake modifier later by a selection interval
     while (nStakeModifierTime < pindexFrom->GetBlockTime() + nStakeModifierSelectionInterval)
