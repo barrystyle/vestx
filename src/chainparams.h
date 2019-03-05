@@ -87,6 +87,8 @@ public:
     int PoolMaxTransactions() const { return nPoolMaxTransactions; }
     int FulfilledRequestExpireTime() const { return nFulfilledRequestExpireTime; }
     std::string SporkPubKey() const { return strSporkPubKey; }
+    int CollateralLevels() const { return nCollateralLevels.size(); }
+    const std::vector<CAmount> ValidCollateralAmounts() const { return nCollateralLevels; }
 protected:
     CChainParams() {}
 
@@ -110,6 +112,7 @@ protected:
     int nFulfilledRequestExpireTime;
     std::string strSporkPubKey;
     int nMaxReorganizationDepth;
+    std::vector<CAmount> nCollateralLevels;
 };
 
 /**

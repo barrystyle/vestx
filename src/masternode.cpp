@@ -125,9 +125,16 @@ CMasternode::CollateralStatus CMasternode::CheckCollateral(const COutPoint& outp
         return COLLATERAL_UTXO_NOT_FOUND;
     }
 
-    if(coin.out.nValue != 15000 * COIN) {
-        return COLLATERAL_INVALID_AMOUNT;
+    bool fCollateralAmountValid = false;
+    for(int i=0; i<Params().CollateralLevels(); i++) {
+        if(coin.out.nValue == (Params().ValidCollateralAmounts()[i] * COIN)) {
+           fCollateralAmountValid = true;
+           break;
+        }
     }
+
+    if(!fCollateralAmountValid)
+        return COLLATERAL_INVALID_AMOUNT;
 
     nHeightRet = coin.nHeight;
     return COLLATERAL_OK;
@@ -271,14 +278,17 @@ bool CMasternode::IsInputAssociatedWithPubkey() const
 {
     CScript payee;
     payee = GetScriptForDestination(pubKeyCollateralAddress.GetID());
-
     CTransactionRef tx;
     uint256 hash;
     if(GetTransaction(vin.prevout.hash, tx, Params().GetConsensus(), hash, true)) {
-        for(const CTxOut &out : tx->vout)
-            if(out.nValue == 15000 * COIN && out.scriptPubKey == payee) return true;
+        for(const CTxOut &out : tx->vout) {
+            for(int i=0; i<Params().CollateralLevels(); i++) {
+                if(out.nValue == (Params().ValidCollateralAmounts()[i] * COIN) && out.scriptPubKey == payee) {
+                   return true;
+                }
+            }
+        }
     }
-
     return false;
 }
 

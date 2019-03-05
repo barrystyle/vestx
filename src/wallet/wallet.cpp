@@ -2507,7 +2507,12 @@ static bool IsCorrectType(CAmount nAmount, AvailableCoinsType nCoinType)
             found = !CPrivateSend::IsDenominatedAmount(nAmount);
 #endif
     } else if(nCoinType == ONLY_MASTERNODE_COLLATERAL) {
-        found = nAmount == 15000 * COIN;
+        for(int i=0; i<Params().CollateralLevels(); i++) {
+            if(nAmount == (Params().ValidCollateralAmounts()[i] * COIN)) {
+                found = true;
+                break;
+            }
+        }
     } else if(nCoinType == ONLY_MERCHANTNODE_COLLATERAL) {
         found = nAmount == 1 * COIN;
     } else if(nCoinType == ONLY_PRIVATESEND_COLLATERAL) {
@@ -2923,7 +2928,11 @@ bool CWallet::SelectCoinsGrouppedByAddresses(std::vector<CompactTallyItem>& vecT
             if(fAnonymizable) {
                 // ignore collaterals
                 if(CPrivateSend::IsCollateralAmount(wtx.tx->vout[i].nValue)) continue;
-                if(fMasterNode && wtx.tx->vout[i].nValue == 15000 * COIN) continue;
+                for(int i=0; i<Params().CollateralLevels(); i++) {
+                   if(fMasterNode && wtx.tx->vout[i].nValue == (Params().ValidCollateralAmounts()[i] * COIN)) {
+                      continue;
+                   }
+                }
                 // ignore outputs that are 10 times smaller then the smallest denomination
                 // otherwise they will just lead to higher fee / lower priority
                 if(wtx.tx->vout[i].nValue <= nSmallestDenom/10) continue;
