@@ -135,7 +135,7 @@ private:
     QAction *openRepairAction = nullptr;
     QAction *openConfEditorAction = nullptr;
     QAction *openMNConfEditorAction = nullptr;
-    QAction *showBackupsAction = nullptr;
+    // QAction *showBackupsAction = nullptr;
     QAction *openAction = nullptr;
     QAction *showHelpMessageAction = nullptr;
 
