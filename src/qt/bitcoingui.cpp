@@ -339,15 +339,15 @@ void BitcoinGUI::createActions()
     openConfEditorAction->setStatusTip(tr("Open configuration file"));
     openMNConfEditorAction = new QAction(QIcon(":/icons/edit"), tr("Open &Masternode Configuration File"), this);
     openMNConfEditorAction->setStatusTip(tr("Open Masternode configuration file"));
-    showBackupsAction = new QAction(QIcon(":/icons/browse"), tr("Show Automatic &Backups"), this);
-    showBackupsAction->setStatusTip(tr("Show automatically created wallet backups"));
+    // showBackupsAction = new QAction(QIcon(":/icons/browse"), tr("Show Automatic &Backups"), this);
+    // showBackupsAction->setStatusTip(tr("Show automatically created wallet backups"));
 
     openInfoAction->setEnabled(true);
     openRPCConsoleAction->setEnabled(true);
     openGraphAction->setEnabled(true);
     openPeersAction->setEnabled(true);
     openRepairAction->setEnabled(false);
-    showBackupsAction->setEnabled(false);
+    // showBackupsAction->setEnabled(false);
 
     usedSendingAddressesAction = new QAction(platformStyle->TextColorIcon(":/icons/address-book"), tr("&Sending addresses..."), this);
     usedSendingAddressesAction->setStatusTip(tr("Show the list of used sending addresses and labels"));
@@ -373,7 +373,7 @@ void BitcoinGUI::createActions()
     connect(openGraphAction, SIGNAL(triggered()), this, SLOT(showGraph()));
     connect(openPeersAction, SIGNAL(triggered()), this, SLOT(showPeers()));
     connect(openRepairAction, SIGNAL(triggered()), this, SLOT(showRepair()));
-    connect(showBackupsAction, SIGNAL(triggered()), this, SLOT(showBackups()));
+    // connect(showBackupsAction, SIGNAL(triggered()), this, SLOT(showBackups()));
 
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
@@ -444,7 +444,7 @@ void BitcoinGUI::createMenuBar()
         tools->addSeparator();
         tools->addAction(openConfEditorAction);
         tools->addAction(openMNConfEditorAction);
-        tools->addAction(showBackupsAction);
+        // tools->addAction(showBackupsAction);
     }
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
@@ -692,7 +692,7 @@ void BitcoinGUI::createTrayIconMenu()
         trayIconMenu->addSeparator();
         trayIconMenu->addAction(openConfEditorAction);
         trayIconMenu->addAction(openMNConfEditorAction);
-        trayIconMenu->addAction(showBackupsAction);
+        // trayIconMenu->addAction(showBackupsAction);
     }
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addAction(openRPCConsoleAction);
