@@ -624,13 +624,7 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     receiveCoinsAction->setEnabled(enabled);
     receiveCoinsMenuAction->setEnabled(enabled);
     historyAction->setEnabled(enabled);
-
-    // Dash
-    QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool() && masternodeAction) {
-        masternodeAction->setEnabled(enabled);
-    }
-    //
+    masternodeAction->setEnabled(enabled);
 
     encryptWalletAction->setEnabled(enabled);
     backupWalletAction->setEnabled(enabled);
@@ -826,11 +820,8 @@ void BitcoinGUI::gotoHistoryPage()
 // Dash
 void BitcoinGUI::gotoMasternodePage()
 {
-    QSettings settings;
-    if (settings.value("fShowMasternodesTab").toBool()) {
-        masternodeAction->setChecked(true);
-        if (walletFrame) walletFrame->gotoMasternodePage();
-    }
+    masternodeAction->setChecked(true);
+    if (walletFrame) walletFrame->gotoMasternodePage();
 }
 //
 
