@@ -12,55 +12,41 @@
 #include <arith_uint256.h>
 #include <primitives/block.h>
 
-unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
+unsigned int static PoSWorkRequired(const CBlockIndex* pindexLast, const Consensus::Params& params)
 {
-    /* current difficulty formula, vestx - DarkGravity v3, written by Evan Duffield - evan@vestx.org */
-    const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
-    int64_t nPastBlocks = 24;
+    arith_uint256 bnTargetLimit = (~arith_uint256(0) >> 24);
+    int64_t nTargetSpacing = Params().GetConsensus().nPosTargetSpacing;
+    int64_t nTargetTimespan = Params().GetConsensus().nPosTargetTimespan;
 
-    // make sure we have at least (nPastBlocks + 1) blocks, otherwise just return powLimit
-    if (!pindexLast || pindexLast->nHeight < nPastBlocks) {
-        return bnPowLimit.GetCompact();
-    }
+    int64_t nActualSpacing = 0;
+    if (pindexLast->nHeight != 0)
+        nActualSpacing = pindexLast->GetBlockTime() - pindexLast->pprev->GetBlockTime();
 
-    const CBlockIndex *pindex = pindexLast;
-    arith_uint256 bnPastTargetAvg;
+    if (nActualSpacing < 0)
+        nActualSpacing = 1;
 
-    for (unsigned int nCountBlocks = 1; nCountBlocks <= nPastBlocks; nCountBlocks++) {
-        arith_uint256 bnTarget = arith_uint256().SetCompact(pindex->nBits);
-        if (nCountBlocks == 1) {
-            bnPastTargetAvg = bnTarget;
-        } else {
-            // NOTE: that's not an average really...
-            bnPastTargetAvg = (bnPastTargetAvg * nCountBlocks + bnTarget) / (nCountBlocks + 1);
-        }
+    // ppcoin: target change every block
+    // ppcoin: retarget with exponential moving toward target spacing
+    arith_uint256 bnNew;
+    bnNew.SetCompact(pindexLast->nBits);
 
-        if(nCountBlocks != nPastBlocks) {
-            assert(pindex->pprev); // should never fail
-            pindex = pindex->pprev;
-        }
-    }
+    int64_t nInterval = nTargetTimespan / nTargetSpacing;
+    bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
+    bnNew /= ((nInterval + 1) * nTargetSpacing);
 
-    arith_uint256 bnNew(bnPastTargetAvg);
-
-    int64_t nActualTimespan = pindexLast->GetBlockTime() - pindex->GetBlockTime();
-    // NOTE: is this accurate? nActualTimespan counts it for (nPastBlocks - 1) blocks only...
-    int64_t nTargetTimespan = nPastBlocks * params.nPowTargetSpacing;
-
-    if (nActualTimespan < nTargetTimespan/3)
-        nActualTimespan = nTargetTimespan/3;
-    if (nActualTimespan > nTargetTimespan*3)
-        nActualTimespan = nTargetTimespan*3;
-
-    // Retarget
-    bnNew *= nActualTimespan;
-    bnNew /= nTargetTimespan;
-
-    if (bnNew > bnPowLimit) {
-        bnNew = bnPowLimit;
-    }
+    if (bnNew <= 0 || bnNew > bnTargetLimit)
+        bnNew = bnTargetLimit;
 
     return bnNew.GetCompact();
+}
+
+unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
+{
+    const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
+    if(pindexLast->nHeight + 1 >= params.nLastPoWBlock) {
+        return PoSWorkRequired(pindexLast, params);
+    }
+    return bnPowLimit.GetCompact();
 }
 
 bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params)
