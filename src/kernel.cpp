@@ -250,29 +250,13 @@ static bool GetKernlStakeModifierV03(uint256 hashBlockFrom, unsigned int nTimeTx
     CBlockIndex* pindexNext = chainActive[pindexFrom->nHeight + 1];
 
     // loop to find the stake modifier later by a selection interval
-    while (nStakeModifierTime < pindexFrom->GetBlockTime() + nStakeModifierSelectionInterval) {
-        if (!pindexNext) {
-            // Should never happen
-            if(Params().NetworkIDString() == CBaseChainParams::TESTNET)
-            {
-                nStakeModifierHeight = pindexFrom->nHeight;
-                nStakeModifierTime = pindexFrom->GetBlockTime();
-                if(pindex->GeneratedStakeModifier())
-                    nStakeModifier = pindex->nStakeModifier;
-                return true;
-            }
-            else
-            {
-                return error("Null pindexNext\n");
-            }
-        }
-
-        pindex = pindexNext;
-        pindexNext = chainActive[pindexNext->nHeight + 1];
-        if (pindex->GeneratedStakeModifier()) {
-            nStakeModifierHeight = pindex->nHeight;
-            nStakeModifierTime = pindex->GetBlockTime();
-        }
+    while (nStakeModifierTime < pindexFrom->GetBlockTime() + nStakeModifierSelectionInterval)
+    {
+           nStakeModifierHeight = pindexFrom->nHeight;
+           nStakeModifierTime = pindexFrom->GetBlockTime();
+           if(pindex->GeneratedStakeModifier())
+               nStakeModifier = pindex->nStakeModifier;
+           return true;
     }
     nStakeModifier = pindex->nStakeModifier;
     return true;
