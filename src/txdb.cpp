@@ -299,7 +299,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 
                 if(pindexNew->nHeight <= Params().GetConsensus().nLastPoWBlock)
                 {
-                    if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, Params().GetConsensus()))
+                    if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, false, Params().GetConsensus()))
                     {
                         return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
                     }

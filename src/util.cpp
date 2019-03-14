@@ -675,13 +675,13 @@ void PrintExceptionContinue(const std::exception* pex, const char* pszThread)
 
 fs::path GetDefaultDataDir()
 {
-    // Windows < Vista: C:\Documents and Settings\Username\Application Data\VESTX
-    // Windows >= Vista: C:\Users\Username\AppData\Roaming\VESTX
-    // Mac: ~/Library/Application Support/VESTX
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\vestx
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\vestx
+    // Mac: ~/Library/Application Support/vestx
     // Unix: ~/.vestx
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "VESTXCore";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "vestx";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -691,10 +691,10 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/VESTXCore";
+    return pathRet / "Library/Application Support/vestx";
 #else
     // Unix
-    return pathRet / ".vestxcore";
+    return pathRet / ".vestx";
 #endif
 #endif
 }

@@ -553,11 +553,9 @@ static bool ProcessBlockFound(const std::shared_ptr<const CBlock> &pblock, const
     return true;
 }
 
-// ***TODO*** that part changed in vestx, we are using a mix with old one here for now
-void static VESTXMiner(const CChainParams& chainparams, CConnman& connman,
-                     CWallet* pwallet, bool fProofOfStake)
+void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWallet* pwallet, bool fProofOfStake)
 {
-    LogPrintf("XsnMiner -- started\n");
+    LogPrintf("vestxminer -- started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread("vestx-miner");
 
@@ -612,7 +610,7 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman,
             auto pblocktemplate = assemlber.CreateNewBlock(pwallet, coinbaseScript->reserveScript, fProofOfStake, true);
             if (!pblocktemplate.get())
             {
-                LogPrintf("XsnMiner -- Failed to find a coinstake\n");
+                LogPrintf("vestxminer -- Failed to find a coinstake\n");
                 MilliSleep(5000);
                 continue;
             }
@@ -669,7 +667,7 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman,
                     {
                         // Found a solution
                         SetThreadPriority(THREAD_PRIORITY_NORMAL);
-                        LogPrintf("XsnMiner:\n  proof-of-work found\n  hash: %s\n  target: %s\n", hash.GetHex(), hashTarget.GetHex());
+                        LogPrintf("vestxminer:\n  proof-of-work found\n  hash: %s\n  target: %s\n", hash.GetHex(), hashTarget.GetHex());
                         ProcessBlockFound(pblock, chainparams);
                         SetThreadPriority(THREAD_PRIORITY_LOWEST);
                         coinbaseScript->KeepScript();
@@ -718,7 +716,7 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman,
         }
         catch (const std::runtime_error &e)
         {
-            LogPrintf("XsnMiner -- runtime error: %s\n", e.what());
+            LogPrintf("vestxminer -- runtime error: %s\n", e.what());
             //            return;
         }
     }

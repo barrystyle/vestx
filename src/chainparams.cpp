@@ -38,7 +38,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
 
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
-    const char* pszTimestamp = "vestx powposmn test 2019";
+    const char* pszTimestamp = "vestx chain launch mar2019";
     const CScript genesisOutputScript = CScript() << ParseHex("03042a235a39a72d7b1296313b0193ba3f93ad1a1fa2d72f1cab4f21d342c9d5b8") << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
@@ -64,10 +64,8 @@ class CMainParams : public CChainParams {
 public:
     CMainParams() {
         strNetworkID = "main";
-        consensus.nLastPoWBlock = 750;
-        consensus.nMasternodePaymentsStartBlock = consensus.nLastPoWBlock + 1;
-        consensus.nMasternodePaymentsIncreaseBlock = 158000;
-        consensus.nMasternodePaymentsIncreasePeriod = 576*30;
+
+        consensus.nLastPoWBlock = 300;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -77,19 +75,19 @@ public:
         consensus.nSuperblockStartBlock = consensus.nSuperblockCycle;
         consensus.nGovernanceMinQuorum = 10;
         consensus.nGovernanceFilterElements = 20000;
-        consensus.BIP34Height = consensus.nLastPoWBlock;
+        consensus.BIP34Height = 10;
         consensus.BIP34Hash = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
         consensus.BIP65Height = consensus.nLastPoWBlock;
         consensus.BIP66Height = consensus.nLastPoWBlock;
         consensus.powLimit = uint256S("0000ffff00000000000000000000000000000000000000000000000000000000");
-        consensus.nPowTargetTimespan = 3 * 60;
-        consensus.nPowTargetSpacing = 45;
+        consensus.nPowTargetTimespan = 2 * 60;
+        consensus.nPowTargetSpacing = 40;
         consensus.nPosTargetSpacing = consensus.nPowTargetSpacing;
         consensus.nPosTargetTimespan = consensus.nPowTargetTimespan;
         consensus.nMasternodeMinimumConfirmations = 15;
-        consensus.nStakeMinAge = 10 * 60;
+        consensus.nStakeMinAge = 60 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
-        consensus.nCoinbaseMaturity = 20;
+        consensus.nCoinbaseMaturity = 15;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1080;
@@ -100,7 +98,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999;
 
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
@@ -127,10 +125,9 @@ public:
         nMaxReorganizationDepth = 100;
 
 	// genesis routine
-	uint32_t nTime = 1551771000;
-	uint32_t nNonce = 112569;
+	uint32_t nTime = 1552540000;
+	uint32_t nNonce = 0;
 
-#if 0
 	if (nNonce == 0)
 	{
 	  while (UintToArith256(genesis.GetHash()) > UintToArith256(consensus.powLimit))
@@ -145,17 +142,15 @@ public:
 	{
           genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
 	}
-#endif
 
-        genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        assert(consensus.hashGenesisBlock == uint256S("000014e6788fe294da86bdbf9af9c9f17a30effb7bd35b0c7a50d6398114358e"));
+        // assert(consensus.hashGenesisBlock == uint256S("000014e6788fe294da86bdbf9af9c9f17a30effb7bd35b0c7a50d6398114358e"));
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,70);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,132);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,198);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
-        bech32_hrp = "xc";
+        bech32_hrp = "vx";
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
@@ -165,20 +160,18 @@ public:
         nCollateralLevels = { 50000 };
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60;
-        strSporkPubKey = "030a2b7fdf1f123f3686ebc00f1226a20275bc785570ef069e2c2d81b61d616e91";
+        strSporkPubKey = "02001bf76ee07f03f8327389b1f27bb736a3a68807fbf7367e607f037e2863cab5";
 
         checkpointData = {
             {
-                { 0, uint256S("000014e6788fe294da86bdbf9af9c9f17a30effb7bd35b0c7a50d6398114358e")},
+                { 0, consensus.hashGenesisBlock }
             }
         };
 
         chainTxData = ChainTxData{
-            // Data as of block 0000000000000000002d6cca6761c99b3c2e936f9a0e304b7c7651a993f461de (height 506081).
-            1520274471, // * UNIX timestamp of last known number of transactions
-            2000,  // * total number of transactions between genesis and that timestamp
-                        //   (the tx=... number in the SetBestChain debug.log lines)
-            1.0         // * estimated number of transactions per second after that timestamp
+            nTime,
+            1,
+            1.0
         };
 
         /* disable fallback fee on mainnet */
@@ -194,9 +187,6 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
         consensus.nLastPoWBlock = 750;
-        consensus.nMasternodePaymentsStartBlock = consensus.nLastPoWBlock + 1;
-        consensus.nMasternodePaymentsIncreaseBlock = 158000;
-        consensus.nMasternodePaymentsIncreasePeriod = 576*30;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -210,7 +200,7 @@ public:
         consensus.BIP34Hash = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
         consensus.BIP65Height = consensus.nLastPoWBlock;
         consensus.BIP66Height = consensus.nLastPoWBlock;
-        consensus.powLimit = uint256S("0000ffff00000000000000000000000000000000000000000000000000000000");
+        consensus.powLimit = uint256S("7fffff0000000000000000000000000000000000000000000000000000000000");
         consensus.nPowTargetTimespan = 3 * 60;
         consensus.nPowTargetSpacing = 45;
         consensus.nPosTargetSpacing = consensus.nPowTargetSpacing;
@@ -218,7 +208,7 @@ public:
         consensus.nMasternodeMinimumConfirmations = 15;
         consensus.nStakeMinAge = 10 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
-        consensus.nCoinbaseMaturity = 20;
+        consensus.nCoinbaseMaturity = 15;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1080;

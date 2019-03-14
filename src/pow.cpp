@@ -96,10 +96,13 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
     if(pindexLast->nHeight + 1 >= params.nLastPoWBlock) {
         return PoSWorkRequired(pindexLast, params);
     }
-    return DarkGravityWave(pindexLast, params);
+    if(pindexLast->nHeight + 1 >= (params.nLastPoWBlock-50)) {
+        return DarkGravityWave(pindexLast, params);
+    }
+    return UintToArith256(params.powLimit).GetCompact();
 }
 
-bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params& params)
+bool CheckProofOfWork(uint256 hash, unsigned int nBits, bool fMining, const Consensus::Params& params)
 {
     bool fNegative;
     bool fOverflow;
@@ -112,8 +115,12 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
         return error("CheckProofOfWork(): nBits below minimum work");
 
     // Check proof of work matches claimed amount
-    if (UintToArith256(hash) > bnTarget)
-        return error("CheckProofOfWork(): hash doesn't match nBits");
+    if (UintToArith256(hash) > bnTarget) {
+        if (!fMining)
+           return error("CheckProofOfWork(): hash doesn't match nBits");
+        else
+           return false;
+    }
 
     return true;
 }
