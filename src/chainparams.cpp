@@ -85,8 +85,9 @@ public:
         consensus.nPosTargetSpacing = consensus.nPowTargetSpacing;
         consensus.nPosTargetTimespan = consensus.nPowTargetTimespan;
         consensus.nMasternodeMinimumConfirmations = 15;
-        consensus.nStakeMinAge = 60 * 60;
+        consensus.nStakeMinAge = 10 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
+        consensus.nModifierInterval = 60 * 20;
         consensus.nCoinbaseMaturity = 15;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
@@ -186,7 +187,8 @@ class CTestNetParams : public CChainParams {
 public:
     CTestNetParams() {
         strNetworkID = "test";
-        consensus.nLastPoWBlock = 750;
+
+        consensus.nLastPoWBlock = 300;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -208,6 +210,7 @@ public:
         consensus.nMasternodeMinimumConfirmations = 15;
         consensus.nStakeMinAge = 10 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
+        consensus.nModifierInterval = 60 * 20;
         consensus.nCoinbaseMaturity = 15;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;

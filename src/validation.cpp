@@ -3253,9 +3253,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
 
         CBlock blockTmp = block;
 
-        CBlockSigner signer(blockTmp, nullptr);
-
-        if(!signer.CheckBlockSignature()) {
+        if(!CheckBlockSignature(block)) {
             return state.DoS(100, error("CheckBlock(): block signature invalid"),
                              REJECT_INVALID, "bad-block-signature");
         }

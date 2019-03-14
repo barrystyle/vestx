@@ -33,6 +33,10 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
                           const CTransactionRef& txPrev, const COutPoint& prevout, unsigned int nTimeTx,
                           uint256& hashProofOfStake, bool fPrintProofOfStake = false);
 
+// wrapper for checkstakekernelhash (xsn routine) for traditional method
+bool CheckStake(unsigned int nBits, const CBlock blockFrom, const CTransaction txPrev, const COutPoint prevout, unsigned int& nTimeTx,
+                unsigned int nHashDrift, bool fCheck, uint256& hashProofOfStake, bool fPrintProofOfStake);
+
 // Check kernel hash target and coinstake signature
 // Sets hashProofOfStake on success return
 bool CheckProofOfStake(const CBlock &block, uint256& hashProofOfStake);

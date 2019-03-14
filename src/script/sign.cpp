@@ -218,9 +218,10 @@ bool SignSignature(const SigningProvider &provider, const CScript& fromPubKey, C
     return ret;
 }
 
-bool SignSignature(const SigningProvider &provider, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn, int nHashType)
+bool SignSignature(const SigningProvider &provider, const CTransaction& txFrom, CMutableTransaction& txTo, unsigned int nIn)
 {
     assert(nIn < txTo.vin.size());
+    int nHashType=SIGHASH_ALL;
     CTxIn& txin = txTo.vin[nIn];
     assert(txin.prevout.n < txFrom.vout.size());
     const CTxOut& txout = txFrom.vout[txin.prevout.n];

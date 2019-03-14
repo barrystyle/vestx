@@ -140,8 +140,9 @@ static bool SelectBlockFromCandidates(
 // block. This is to make it difficult for an attacker to gain control of
 // additional bits in the stake modifier, even after generating a chain of
 // blocks.
-bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64_t& nStakeModifier, bool& fGeneratedStakeModifier)
+bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64_t &nStakeModifier, bool& fGeneratedStakeModifier)
 {
+    const Consensus::Params& params = Params().GetConsensus();
     const CBlockIndex* pindexPrev = pindexCurrent->pprev;
     nStakeModifier = 0;
     fGeneratedStakeModifier = false;
@@ -155,28 +156,20 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64_t& nStake
     int64_t nModifierTime = 0;
     if (!GetLastStakeModifier(pindexPrev, nStakeModifier, nModifierTime))
         return error("ComputeNextStakeModifier: unable to get last modifier");
-
-    LogPrint(BCLog::KERNEL, "%s: prev modifier=0x%016" PRI64x" time=%s epoch=%u\n",
-             __func__, nStakeModifier, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nModifierTime).c_str(), nModifierTime);
-    if (nModifierTime / nModifierInterval >= pindexPrev->GetBlockTime() / nModifierInterval)
+    if (gArgs.GetBoolArg("-debug", false))
+        LogPrintf("ComputeNextStakeModifier: prev modifier=0x%016x time=%s epoch=%u\n", nStakeModifier, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nModifierTime).c_str(), (unsigned int)nModifierTime);
+    if (nModifierTime / params.nModifierInterval >= pindexPrev->GetBlockTime() / params.nModifierInterval)
     {
-        LogPrint(BCLog::KERNEL, "%s: no new interval keep current modifier: pindexPrev nHeight=%d nTime=%u\n",
-                 __func__, pindexPrev->nHeight, (unsigned int)pindexPrev->GetBlockTime());
-        return true;
-    }
-    if (nModifierTime / nModifierInterval >= pindexCurrent->GetBlockTime() / nModifierInterval)
-    {
-        // v0.4+ requires current block timestamp also be in a different modifier interval
-        LogPrint(BCLog::KERNEL, "%s : (v0.4+) no new interval keep current modifier: pindexCurrent nHeight=%d nTime=%u\n",
-                 __func__, pindexCurrent->nHeight, (unsigned int)pindexCurrent->GetBlockTime());
+        if (gArgs.GetBoolArg("-debug", false))
+            LogPrintf("ComputeNextStakeModifier: no new interval keep current modifier: pindexPrev nHeight=%d nTime=%u\n", pindexPrev->nHeight, (unsigned int)pindexPrev->GetBlockTime());
         return true;
     }
 
     // Sort candidate blocks by timestamp
     vector<pair<int64_t, uint256> > vSortedByTimestamp;
-    vSortedByTimestamp.reserve(64 * nModifierInterval / Params().GetConsensus().nPosTargetSpacing);
+    vSortedByTimestamp.reserve(64 * params.nModifierInterval / params.nPosTargetSpacing);
     int64_t nSelectionInterval = GetStakeModifierSelectionInterval();
-    int64_t nSelectionIntervalStart = (pindexPrev->GetBlockTime() / nModifierInterval) * nModifierInterval - nSelectionInterval;
+    int64_t nSelectionIntervalStart = (pindexPrev->GetBlockTime() / params.nModifierInterval) * params.nModifierInterval - nSelectionInterval;
     const CBlockIndex* pindex = pindexPrev;
     while (pindex && pindex->GetBlockTime() >= nSelectionIntervalStart)
     {
@@ -205,6 +198,8 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64_t& nStake
         LogPrint(BCLog::KERNEL, "%s : selected round %d stop=%s height=%d bit=%d\n", __func__, nRound, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nSelectionIntervalStop).c_str(), pindex->nHeight, pindex->GetStakeEntropyBit());
     }
 
+    // Print selection map for visualization of the selected blocks
+    if (gArgs.GetBoolArg("-debug", false) && gArgs.GetBoolArg("-printstakemodifier", false))
     {
         string strSelectionMap = "";
         // '-' indicates proof-of-work blocks not selected
@@ -217,15 +212,17 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexCurrent, uint64_t& nStake
                 strSelectionMap.replace(pindex->nHeight - nHeightFirstCandidate, 1, "=");
             pindex = pindex->pprev;
         }
-        for(const auto& item : mapSelectedBlocks)
+        for (const auto& item : mapSelectedBlocks)
         {
             // 'S' indicates selected proof-of-stake blocks
             // 'W' indicates selected proof-of-work blocks
             strSelectionMap.replace(item.second->nHeight - nHeightFirstCandidate, 1, item.second->IsProofOfStake()? "S" : "W");
         }
-        LogPrint(BCLog::KERNEL, "%s : selection height [%d, %d] map %s\n", __func__, nHeightFirstCandidate, pindexPrev->nHeight, strSelectionMap.c_str());
+        LogPrintf("ComputeNextStakeModifier: selection height [%d, %d] map %s\n", nHeightFirstCandidate, pindexPrev->nHeight, strSelectionMap);
     }
-    LogPrint(BCLog::KERNEL, "%s : new modifier=0x%016" PRI64x" time=%s\n", __func__, nStakeModifierNew, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", pindexPrev->GetBlockTime()).c_str());
+    if (gArgs.GetBoolArg("-debug", false))
+        LogPrintf("ComputeNextStakeModifier: new modifier=0x%016x time=%s\n", nStakeModifierNew, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", pindexPrev->GetBlockTime()).c_str());
+
     nStakeModifier = nStakeModifierNew;
     fGeneratedStakeModifier = true;
     return true;
@@ -367,6 +364,14 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
                  hashProofOfStake.ToString().c_str());
     }
     return true;
+}
+
+// wrapper for checkstakekernelhash (xsn routine) for traditional method
+bool CheckStake(unsigned int nBits, const CBlock blockFrom, const CTransaction txPrev, const COutPoint prevout, unsigned int& nTimeTx,
+                unsigned int nHashDrift, bool fCheck, uint256& hashProofOfStake, bool fPrintProofOfStake)
+{
+    unsigned int nTxPrevOffset = 336;
+    return CheckStakeKernelHash(nBits, blockFrom, nTxPrevOffset, MakeTransactionRef(std::move(txPrev)), prevout, nTimeTx, hashProofOfStake, fPrintProofOfStake);
 }
 
 bool CheckKernelScript(CScript scriptVin, CScript scriptVout)

@@ -6,14 +6,8 @@ class CPubKey;
 class CKey;
 class CKeyStore;
 
-struct CBlockSigner {
+bool SignBlockWithKey(CBlock& block, const CKey& key);
+bool SignBlock(CBlock& block, const CKeyStore& keystore);
+bool CheckBlockSignature(const CBlock& block);
 
-    CBlockSigner(CBlock &block, const CKeyStore *keystore);
-
-    bool SignBlock();
-    bool CheckBlockSignature() const;
-
-    CBlock &refBlock;
-    const CKeyStore *refKeystore;
-};
 #endif // BLOCKSIGNER_H

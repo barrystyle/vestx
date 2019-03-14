@@ -97,8 +97,7 @@ enum AvailableCoinsType
     ALL_COINS,
     ONLY_DENOMINATED,
     ONLY_NONDENOMINATED,
-    ONLY_MASTERNODE_COLLATERAL, // find masternode outputs including locked ones (use with caution)
-    ONLY_MERCHANTNODE_COLLATERAL,
+    ONLY_MASTERNODE_COLLATERAL,
     ONLY_PRIVATESEND_COLLATERAL
 };
 
@@ -120,7 +119,7 @@ enum class OutputType {
 constexpr OutputType DEFAULT_ADDRESS_TYPE{OutputType::LEGACY};
 
 //! Default for -changetype
-constexpr OutputType DEFAULT_CHANGE_TYPE{OutputType::CHANGE_AUTO};
+constexpr OutputType DEFAULT_CHANGE_TYPE{OutputType::LEGACY};
 
 struct CompactTallyItem
 {
@@ -780,16 +779,6 @@ private:
      */
     const CBlockIndex* m_last_block_processed = nullptr;
 
-    bool CreateCoinStakeKernel(CScript &kernelScript, const CScript &stakeScript,
-                               unsigned int nBits, const CBlock& blockFrom,
-                               unsigned int nTxPrevOffset, const CTransactionRef &txPrev,
-                               const COutPoint& prevout, unsigned int &nTimeTx,
-                               bool fGenerateSegwit, bool fPrintProofOfStake) const;
-
-    void FillCoinStakePayments(CMutableTransaction &transaction,
-                               const CScript &kernelScript,
-                               const COutPoint &stakePrevout, CAmount blockReward) const;
-
     bool GetOutpointAndKeysFromOutput(const COutput& out, COutPoint& outpointRet, CPubKey& pubKeyRet, CKey& keyRet);
     void LoadContractsFromDB();
 
@@ -1028,7 +1017,7 @@ public:
      */
     bool CreateTransaction(const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosInOut,
                            std::string& strFailReason, const CCoinControl& coin_control, bool sign = true, OnTransactionToBeSigned onTxToBeSigned = OnTransactionToBeSigned());
-    bool CreateCoinStake(unsigned int nBits, CAmount blockReward,
+    bool CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, CAmount blockReward,
                          CMutableTransaction& txNew, unsigned int& nTxNewTime,
                          std::vector<const CWalletTx *> &vwtxPrev,
                          bool fGenerateSegwit);

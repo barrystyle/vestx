@@ -93,8 +93,8 @@ struct Params {
     uint256 defaultAssumeValid;
     int nStakeMinAge;
     int nStakeMaxAge;
+    int64_t nModifierInterval;
     int nCoinbaseMaturity;
-    int nTPoSContractSignatureDeploymentTime;
 };
 } // namespace Consensus
 

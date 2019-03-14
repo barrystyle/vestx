@@ -37,11 +37,12 @@
 #include <assert.h>
 #include <future>
 
-
 #include <boost/algorithm/string/replace.hpp>
 
 static CCriticalSection cs_wallets;
 static std::vector<CWallet*> vpwallets GUARDED_BY(cs_wallets);
+
+unsigned int nTxConfirmTarget = 1;
 
 bool AddWallet(CWallet* wallet)
 {
@@ -372,87 +373,6 @@ bool CWallet::AddWatchOnly(const CScript& dest)
 CAmount GetStakeReward(CAmount blockReward, unsigned int percentage)
 {
     return (blockReward / 100) * percentage;
-}
-
-bool CWallet::CreateCoinStakeKernel(CScript &kernelScript, const CScript &stakeScript,
-                                    unsigned int nBits, const CBlock &blockFrom,
-                                    unsigned int nTxPrevOffset, const CTransactionRef &txPrev,
-                                    const COutPoint &prevout, unsigned int &nTimeTx,
-                                    bool fGenerateSegwit, bool fPrintProofOfStake) const
-{
-    unsigned int nTryTime = 0;
-    uint256 hashProofOfStake;
-
-    if (blockFrom.GetBlockTime() + Params().GetConsensus().nStakeMinAge + nHashDrift > nTimeTx) // Min age requirement
-        return false;
-
-    CTxDestination dest;
-    if(!ExtractDestination(stakeScript, dest))
-        return false;
-
-    // this will return true only if it's P2SH_SEGWIT, SEGWIT, P2PKH(LEGACY)
-    if(GetKeyForDestination(*this, dest).IsNull())
-    {
-        return error("CreateCoinStakeKernel : no support for kernel %s\n", EncodeDestination(dest));
-    }
-
-    if(!fGenerateSegwit && !boost::get<CKeyID>(&dest))
-    {
-        return false;
-    }
-
-    for(unsigned int i = 0; i < nHashDrift; ++i)
-    {
-        nTryTime = nTimeTx - i;
-        if (CheckStakeKernelHash(nBits, blockFrom, nTxPrevOffset, txPrev, prevout, nTryTime, hashProofOfStake, fPrintProofOfStake))
-        {
-            //Double check that this will pass time requirements
-            if (nTryTime <= chainActive.Tip()->GetMedianTimePast()) {
-                LogPrintf("CreateCoinStakeKernel() : kernel found, but it is too far in the past \n");
-                continue;
-            }
-
-            // Found a kernel
-            if (gArgs.GetBoolArg("-printcoinstake", false))
-                LogPrintf("CreateCoinStakeKernel : kernel found\n");
-
-            kernelScript.clear();
-
-
-            kernelScript = stakeScript;
-            nTimeTx = nTryTime;
-
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void CWallet::FillCoinStakePayments(CMutableTransaction &transaction,
-                                    const CScript &scriptPubKeyOut,
-                                    const COutPoint &stakePrevout,
-                                    CAmount blockReward) const
-{
-    const CWalletTx *walletTx = GetWalletTx(stakePrevout.hash);
-    CTxOut prevTxOut = walletTx->tx->vout[stakePrevout.n];
-
-    auto nCredit = prevTxOut.nValue;
-    unsigned int percentage = 100;
-    auto nCoinStakeReward = nCredit + GetStakeReward(blockReward, percentage);
-    transaction.vin.push_back(CTxIn(stakePrevout));
-
-    // adding output which will pay to coin stake
-    transaction.vout.emplace_back(nCoinStakeReward, scriptPubKeyOut);
-
-    {
-        CTxOut &lastTx = transaction.vout.back();
-        if(lastTx.nValue / 2 > nStakeSplitThreshold * COIN)
-        {
-            lastTx.nValue /= 2;
-            transaction.vout.emplace_back(lastTx.nValue, lastTx.scriptPubKey);
-        }
-    }
 }
 
 bool CWallet::AddWatchOnly(const CScript& dest, int64_t nCreateTime)
@@ -2513,8 +2433,6 @@ static bool IsCorrectType(CAmount nAmount, AvailableCoinsType nCoinType)
                 break;
             }
         }
-    } else if(nCoinType == ONLY_MERCHANTNODE_COLLATERAL) {
-        found = nAmount == 1 * COIN;
     } else if(nCoinType == ONLY_PRIVATESEND_COLLATERAL) {
 #if 0
         found = CPrivateSend::IsCollateralAmount(nAmount);
@@ -2609,8 +2527,7 @@ void CWallet::AvailableCoins(std::vector<COutput> &vCoins, bool fOnlySafe, const
             if (coinControl && coinControl->HasSelected() && !coinControl->fAllowOtherInputs && !coinControl->IsSelected(COutPoint(entry.first, i)))
                 continue;
 
-            if (IsLockedCoin(entry.first, i) && nCoinType != ONLY_MASTERNODE_COLLATERAL &&
-                    nCoinType != ONLY_MERCHANTNODE_COLLATERAL)
+            if (IsLockedCoin(entry.first, i) && nCoinType != ONLY_MASTERNODE_COLLATERAL)
                 continue;
 
             if (IsSpent(wtxid, i))
@@ -3568,7 +3485,9 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CTransac
     return true;
 }
 
-bool CWallet::CreateCoinStake(unsigned int nBits,
+typedef std::vector<unsigned char> valtype;
+bool CWallet::CreateCoinStake(const CKeyStore& keystore,
+                              unsigned int nBits,
                               CAmount blockReward,
                               CMutableTransaction &txNew,
                               unsigned int &nTxNewTime,
@@ -3610,12 +3529,14 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
     if (setStakeCoins.empty())
         return error("CreateCoinStake() : No Coins to stake");
 
+    CAmount nCredit = 0;
+    CScript scriptPubKeyKernel;
+
     //prevent staking a time that won't be accepted
     if (GetAdjustedTime() <= chainActive.Tip()->nTime)
         MilliSleep(10000);
 
     bool fKernelFound = false;
-
     for(const std::pair<const CWalletTx*, unsigned int> &pcoin : setStakeCoins)
     {
         //make sure that enough time has elapsed between
@@ -3630,39 +3551,91 @@ bool CWallet::CreateCoinStake(unsigned int nBits,
 
         // Read block header
         CBlockHeader block = pindex->GetBlockHeader();
+
+        uint256 hashProofOfStake = uint256();
         COutPoint prevoutStake = COutPoint(pcoin.first->GetHash(), pcoin.second);
-
         nTxNewTime = GetAdjustedTime();
-        //iterates each utxo inside of CheckStakeKernelHash()
-        CScript kernelScript;
-        auto stakeScript = pcoin.first->tx->vout[pcoin.second].scriptPubKey;
-        fKernelFound = CreateCoinStakeKernel(kernelScript, stakeScript, nBits,
-                                             block, sizeof(CBlock), pcoin.first->tx,
-                                             prevoutStake, nTxNewTime, fGenerateSegwit, false);
 
-        if(fKernelFound)
-        {
-            FillCoinStakePayments(txNew, kernelScript, prevoutStake, blockReward);
+        //iterates each utxo inside of CheckStakeKernelHash()
+        if (CheckStake(nBits, block, *pcoin.first->tx, prevoutStake, nTxNewTime, nHashDrift, false, hashProofOfStake, true)) {
+
+            if (nTxNewTime <= chainActive.Tip()->GetMedianTimePast()) {
+                LogPrintf("CreateCoinStake() : kernel found, but it is too far in the past \n");
+                continue;
+            }
+
+            LogPrintf("CreateCoinStake : kernel found\n");
+
+            std::vector<valtype> vSolutions;
+            txnouttype whichType;
+            CScript scriptPubKeyOut;
+            scriptPubKeyKernel = pcoin.first->tx->vout[pcoin.second].scriptPubKey;
+            if (!Solver(scriptPubKeyKernel, whichType, vSolutions)) {
+                LogPrintf("CreateCoinStake : failed to parse kernel\n");
+                break;
+            }
+
+            LogPrintf("CreateCoinStake : parsed kernel type=%d\n", whichType);
+
+            if (whichType != TX_PUBKEY && whichType != TX_PUBKEYHASH) {
+                LogPrintf("CreateCoinStake : no support for kernel type=%d\n", whichType);
+                break;
+            }
+
+            if (whichType == TX_PUBKEYHASH)
+            {
+		CKeyID keyID;
+		keyID = CKeyID(uint160(vSolutions[0]));
+
+		CKey key;
+		if (!keystore.GetKey(keyID, key)) {
+                    LogPrintf("CreateCoinStake : failed to get key for kernel type=%d\n", whichType);
+                    break;
+                }
+                scriptPubKeyOut << key.GetPubKey() << OP_CHECKSIG;
+            } else {
+                scriptPubKeyOut = scriptPubKeyKernel;
+            }
+
+            txNew.vin.push_back(CTxIn(pcoin.first->GetHash(), pcoin.second));
+            nCredit += pcoin.first->tx->vout[pcoin.second].nValue;
+            vwtxPrev.push_back(pcoin.first);
+            txNew.vout.push_back(CTxOut(0, scriptPubKeyOut));
+
+            const CBlockIndex* pIndex0 = chainActive.Tip();
+            uint64_t nTotalSize = pcoin.first->tx->vout[pcoin.second].nValue + GetBlockSubsidy(pIndex0->nHeight, Params().GetConsensus());
+
+            if (nTotalSize / 2 > nStakeSplitThreshold * COIN)
+                txNew.vout.push_back(CTxOut(0, scriptPubKeyOut));
+
+            LogPrintf("CreateCoinStake : added kernel type=%d\n", whichType);
+            fKernelFound = true;
             break;
         }
+        if (fKernelFound)
+            break; // if kernel is found stop searching
     }
-
-    if(!fKernelFound)
-    {
-        LogPrint(BCLog::KERNEL, "Failed to find coinstake kernel\n");
+    if (nCredit == 0 || nCredit > nBalance)
         return false;
+
+    // Calculate reward
+    CAmount nReward;
+    const CBlockIndex* pIndex0 = chainActive.Tip();
+    nReward = GetBlockSubsidy(pIndex0->nHeight, Params().GetConsensus());
+    nCredit += nReward;
+
+    //Masternode payment
+    mnpayments.FillBlockPayee(txNew, true);
+
+    // Sign
+    unsigned int nIn = 0;
+    for (const CWalletTx* pcoin : vwtxPrev) {
+        if (!SignSignature(*this, *pcoin->tx, txNew, nIn++))
+            return error("CreateCoinStake : failed to sign coinstake");
     }
 
-    // Update coinbase transaction with additional info about masternode and governance payments,
-    // get some info back to pass to getblocktemplate
-    CTxOut txoutMasternode;
-    std::vector<CTxOut> voutSuperblock;
-    int nHeight = chainActive.Tip()->nHeight + 1;
-    FillBlockPayments(txNew, nHeight, blockReward, txoutMasternode, voutSuperblock);
-    LogPrintf("CreateCoinStake -- nBlockHeight %d blockReward %lld txoutMasternode %s txNew %s",
-              nHeight, blockReward, txoutMasternode.ToString(), txNew.ToString());
-
-    nLastStakeSetUpdate = 0; //this will trigger stake set to repopulate next round
+    // Successfully generated coinstake
+    nLastStakeSetUpdate = 0;
     return true;
 }
 

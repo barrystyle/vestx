@@ -111,20 +111,6 @@ void BlockAssembler::resetBlock()
     nFees = 0;
 }
 
-static bool SignInputsInCoinstake(const SigningProvider &provider, CMutableTransaction &txNew, const std::vector<const CWalletTx*> &vwtxPrev)
-{
-    // Sign
-    int nIn = 0;
-    for(const auto &wtx : vwtxPrev)
-    {
-        if(!SignSignature(provider, *wtx->tx, txNew, nIn++, SIGHASH_ALL))
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, const CScript &scriptPubKeyIn, bool fProofOfStake, bool fMineWitnessTx)
 {
     int64_t nTimeStart = GetTimeMicros();
@@ -196,7 +182,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, 
         bool fStakeFound = false;
         if (nSearchTime >= nLastCoinStakeSearchTime) {
             unsigned int nTxNewTime = 0;
-            if (wallet->CreateCoinStake(pblock->nBits, blockReward,
+            if (wallet->CreateCoinStake(*wallet, pblock->nBits, blockReward,
                                         coinstakeTx, nTxNewTime,
                                         vwtxPrev, fIncludeWitness))
             {
@@ -226,18 +212,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, 
         addPackageTxs(nPackagesSelected, nDescendantsUpdated);
     }
 
-    if(pblock->IsProofOfStake())
-    {
-        CMutableTransaction mutableTx(*pblock->vtx[1]);
-        SignInputsInCoinstake(*wallet, mutableTx, vwtxPrev);
-        pblock->vtx[1] = MakeTransactionRef(std::move(mutableTx));
-    }
-
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     pblocktemplate->vTxFees[0] = -nFees;
-
 
     LogPrintf("CreateNewBlock(): block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
 
@@ -625,9 +603,7 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
             {
                 LogPrintf("CPUMiner : proof-of-stake block found %s \n", pblock->GetHash().ToString().c_str());
 
-                CBlockSigner signer(*pblock, pwallet);
-
-                if (!signer.SignBlock()) {
+                if (!SignBlock(*pblock, *pwallet)) {
                     LogPrintf("VESTXMiner(): Signing new block failed \n");
                     throw std::runtime_error(strprintf("%s: SignBlock failed", __func__));
                 }

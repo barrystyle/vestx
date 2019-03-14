@@ -222,23 +222,6 @@ bool IsBlockPayeeValid(const CTransactionRef& txNew, int nBlockHeight, CAmount e
     return true;
 }
 
-void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blockReward, CTxOut& txoutMasternodeRet, std::vector<CTxOut>& voutSuperblockRet)
-{
-    // only create superblocks if spork is enabled AND if superblock is actually triggered
-    // (height should be validated inside)
-    if(sporkManager.IsSporkActive(Spork::SPORK_9_SUPERBLOCKS_ENABLED) &&
-            CSuperblockManager::IsSuperblockTriggered(nBlockHeight)) {
-        LogPrint(BCLog::GOBJECT, "FillBlockPayments -- triggered superblock creation at height %d\n", nBlockHeight);
-        CSuperblockManager::CreateSuperblock(txNew, nBlockHeight, voutSuperblockRet);
-        return;
-    }
-
-    // FILL BLOCK PAYEE WITH MASTERNODE PAYMENT OTHERWISE
-    mnpayments.FillBlockPayee(txNew, nBlockHeight, blockReward, txoutMasternodeRet);
-    LogPrint(BCLog::MNPAYMENTS, "FillBlockPayments -- nBlockHeight %d blockReward %lld txoutMasternodeRet %s txNew %s",
-             nBlockHeight, blockReward, txoutMasternodeRet.ToString(), txNew.ToString());
-}
-
 std::string GetRequiredPaymentsString(int nBlockHeight)
 {
     // IF WE HAVE A ACTIVATED TRIGGER FOR THIS HEIGHT - IT IS A SUPERBLOCK, GET THE REQUIRED PAYEES
@@ -276,36 +259,50 @@ bool CMasternodePayments::CanVote(COutPoint outMasternode, int nBlockHeight)
 *   Fill Masternode ONLY payment block
 */
 
-void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, int nBlockHeight, CAmount blockReward, CTxOut& txoutMasternodeRet)
+void CMasternodePayments::FillBlockPayee(CMutableTransaction& txNew, bool fProofOfStake)
 {
-    // make sure it's not filled yet
-    txoutMasternodeRet = CTxOut();
+    CBlockIndex* pindexPrev = chainActive.Tip();
+    if (!pindexPrev) return;
 
+    const Consensus::Params& consensusParams = Params().GetConsensus();
+
+    bool hasPayment = true;
     CScript payee;
 
-    if(!mnpayments.GetBlockPayee(nBlockHeight, payee)) {
-        // no masternode detected...
+    if (!mnpayments.GetBlockPayee(pindexPrev->nHeight + 1, payee)) {
         int nCount = 0;
         masternode_info_t mnInfo;
-        if(!mnodeman.GetNextMasternodeInQueueForPayment(nBlockHeight, true, nCount, mnInfo)) {
-            // ...and we can't calculate it on our own
-            LogPrintf("CMasternodePayments::FillBlockPayee -- Failed to detect masternode to pay\n");
-            return;
+        if(!mnodeman.GetNextMasternodeInQueueForPayment(pindexPrev->nHeight + 1, true, nCount, mnInfo)) {
+            payee = GetScriptForDestination(mnInfo.pubKeyCollateralAddress.GetID());
+        } else {
+            LogPrint(BCLog::MNPAYMENTS, "CreateNewBlock: Failed to detect masternode to pay\n");
+            hasPayment = false;
         }
-        // fill payee with locally calculated winner and hope for the best
-        payee = GetScriptForDestination(mnInfo.pubKeyCollateralAddress.GetID());
     }
 
-    // GET MASTERNODE PAYMENT VARIABLES SETUP
-    CAmount masternodePayment = GetMasternodePayment(nBlockHeight, blockReward);
+    CAmount blockValue = GetBlockSubsidy(pindexPrev->nHeight, consensusParams, false);
+    CAmount masternodePayment = GetMasternodePayment(pindexPrev->nHeight, blockValue);
 
-    txoutMasternodeRet = CTxOut(masternodePayment, payee);
-    txNew.vout.push_back(txoutMasternodeRet);
+    if (hasPayment) {
+        if (fProofOfStake) {
+            unsigned int i = txNew.vout.size();
+            txNew.vout.resize(i + 1);
+            txNew.vout[i].scriptPubKey = payee;
+            txNew.vout[i].nValue = masternodePayment;
+            txNew.vout[i - 1].nValue = blockValue - masternodePayment;
+        } else {
+            txNew.vout.resize(2);
+            txNew.vout[1].scriptPubKey = payee;
+            txNew.vout[1].nValue = masternodePayment;
+            txNew.vout[0].nValue = blockValue - masternodePayment;
+        }
 
-    CTxDestination address1;
-    ExtractDestination(payee, address1);
+        CTxDestination address1;
+        ExtractDestination(payee, address1);
+        CBitcoinAddress address2(address1);
 
-    LogPrintf("CMasternodePayments::FillBlockPayee -- Masternode payment %lld to %s\n", masternodePayment, EncodeDestination(address1));
+        LogPrintf("CMasternodePayments::FillBlockPayee -- Masternode payment %lld to %s\n", masternodePayment, EncodeDestination(address1));
+    }
 }
 
 int CMasternodePayments::GetMinMasternodePaymentsProto() {
