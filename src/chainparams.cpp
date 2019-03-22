@@ -188,6 +188,13 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
 
+	// quick note: test and temp networks operate on a existance window of 
+        // approx 3 hours, window is persistent forever if daemon doesnt get restarted
+        uint32_t current_time = (uint32_t)time(NULL);
+	uint32_t elapsed_day = current_time % 86400;
+	uint32_t start_of_day = current_time - elapsed_day;
+	uint32_t quadrant = start_of_day % 10800;
+
         consensus.nLastPoWBlock = 300;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
@@ -198,13 +205,13 @@ public:
         consensus.nSuperblockStartBlock = consensus.nSuperblockCycle;
         consensus.nGovernanceMinQuorum = 10;
         consensus.nGovernanceFilterElements = 20000;
-        consensus.BIP34Height = consensus.nLastPoWBlock;
+        consensus.BIP34Height = 10;
         consensus.BIP34Hash = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
         consensus.BIP65Height = consensus.nLastPoWBlock;
         consensus.BIP66Height = consensus.nLastPoWBlock;
-        consensus.powLimit = uint256S("7fffff0000000000000000000000000000000000000000000000000000000000");
-        consensus.nPowTargetTimespan = 3 * 60;
-        consensus.nPowTargetSpacing = 45;
+        consensus.powLimit = uint256S("0000ffff00000000000000000000000000000000000000000000000000000000");
+        consensus.nPowTargetTimespan = 2 * 60;
+        consensus.nPowTargetSpacing = 40;
         consensus.nPosTargetSpacing = consensus.nPowTargetSpacing;
         consensus.nPosTargetTimespan = consensus.nPowTargetTimespan;
         consensus.nMasternodeMinimumConfirmations = 15;
@@ -217,12 +224,27 @@ public:
         consensus.nRuleChangeActivationThreshold = 1080;
         consensus.nMinerConfirmationWindow = 1440;
 
+        // genesis routine
+        uint32_t nTime = start_of_day;
+        for(int i=0; i<quadrant; i++)
+	  nTime =+ 10800;
+        uint32_t nNonce = 0;
+
+	while (UintToArith256(genesis.GetHash()) > 
+               UintToArith256(consensus.powLimit)) {
+	  nNonce++;
+	  if (nNonce % 1024 == 0) printf("\rnonce %08x", nNonce);
+	  genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
+	}
+	genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
+        consensus.hashGenesisBlock = genesis.GetHash();
+
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999;
 
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
-        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
@@ -240,17 +262,14 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
-        pchMessageStart[0] = 0xb0;
-        pchMessageStart[1] = 0xc0;
-        pchMessageStart[2] = 0xd0;
-        pchMessageStart[3] = 0xe0;
+        pchMessageStart[0] = 0xb1;
+        pchMessageStart[1] = 0xc1;
+        pchMessageStart[2] = 0xd1;
+        pchMessageStart[3] = 0xe1;
         nDefaultPort = 30000;
         nPruneAfterHeight = 100000;
         nMaxReorganizationDepth = 100;
 
-        genesis = CreateGenesisBlock(0, 0, 0x1f00ffff, 1, 0 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
-        // assert(consensus.hashGenesisBlock == uint256S("000014e6788fe294da86bdbf9af9c9f17a30effb7bd35b0c7a50d6398114358e"));
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,70);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,132);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,198);
