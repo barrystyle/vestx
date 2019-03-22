@@ -253,6 +253,35 @@ private:
     WalletDatabase& m_database;
 };
 
+/* hd pubkey data model */
+class CHDPubKey
+{
+private:
+    static const int CURRENT_VERSION = 1;
+    int nVersion;
+
+public:
+    CExtPubKey extPubKey;
+    uint256 hdchainID;
+    uint32_t nAccountIndex;
+    uint32_t nChangeIndex;
+
+    CHDPubKey() : nVersion(CHDPubKey::CURRENT_VERSION), nAccountIndex(0), nChangeIndex(0) {}
+
+    ADD_SERIALIZE_METHODS;
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action)
+    {
+        READWRITE(this->nVersion);
+        READWRITE(extPubKey);
+        READWRITE(hdchainID);
+        READWRITE(nAccountIndex);
+        READWRITE(nChangeIndex);
+    }
+
+    std::string GetKeyPath() const;
+};
+
 //! Compacts BDB state so that wallet.dat is self-contained (if there are changes)
 void MaybeCompactWalletDB();
 

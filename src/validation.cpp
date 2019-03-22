@@ -3251,13 +3251,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         uint256 hashProofOfStake;
         uint256 hash = block.GetHash();
 
-        CBlock blockTmp = block;
-
-        if(!CheckBlockSignature(block)) {
-            return state.DoS(100, error("CheckBlock(): block signature invalid"),
-                             REJECT_INVALID, "bad-block-signature");
-        }
-
         if(!CheckProofOfStake(block, hashProofOfStake)) {
             return state.DoS(100, error("CheckBlock(): check proof-of-stake failed for block %s\n", hash.ToString().c_str()));
         }
