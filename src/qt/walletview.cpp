@@ -11,9 +11,6 @@
 #include <qt/bitcoingui.h>
 #include <qt/clientmodel.h>
 #include <qt/guiutil.h>
-// Dash
-#include <masternodeconfig.h>
-//
 #include <qt/optionsmodel.h>
 #include <qt/overviewpage.h>
 #include <qt/platformstyle.h>
@@ -26,6 +23,7 @@
 
 #include <interfaces/node.h>
 #include <ui_interface.h>
+#include <masternodeconfig.h>
 
 #include <QAction>
 #include <QActionGroup>
@@ -291,24 +289,19 @@ void WalletView::changePassphrase()
     dlg.exec();
 }
 
-void WalletView::unlockWallet(bool fForMixingOnly)
+void WalletView::unlockWallet()
 {
     if(!walletModel)
         return;
     // Unlock wallet when requested by wallet model
-    // Dash
-    //if (walletModel->getEncryptionStatus() == WalletModel::Locked)
-    if (walletModel->getEncryptionStatus() == WalletModel::Locked || walletModel->getEncryptionStatus() == WalletModel::UnlockedForMixingOnly)
+    if (walletModel->getEncryptionStatus() == WalletModel::Locked || walletModel->getEncryptionStatus() == WalletModel::UnlockedForStakingOnly)
     {
-        //AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this);
-        AskPassphraseDialog dlg(fForMixingOnly ? AskPassphraseDialog::UnlockMixing : AskPassphraseDialog::Unlock, this);
-    //
+        AskPassphraseDialog dlg(AskPassphraseDialog::UnlockStaking, this);
         dlg.setModel(walletModel);
         dlg.exec();
     }
 }
 
-// Dash
 void WalletView::lockWallet()
 {
     if(!walletModel)
@@ -316,7 +309,6 @@ void WalletView::lockWallet()
 
     walletModel->setWalletLocked(true);
 }
-//
 
 void WalletView::usedSendingAddresses()
 {

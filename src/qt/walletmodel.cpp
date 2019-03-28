@@ -135,9 +135,19 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         return OK;
     }
 
+    if (isStakingOnlyUnlocked()) 
+    {
+        return StakingOnlyUnlocked;
+    }
+    
+    if (isStakingOnlyUnlocked()) 
+    {
+        return StakingOnlyUnlocked;
+    }
+
     QSet<QString> setAddress; // Used to detect duplicates
     int nAddresses = 0;
-
+    
     // Pre-check input data for validity
     for (const SendCoinsRecipient &rcp : recipients)
     {
@@ -236,6 +246,15 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &transaction)
 {
     QByteArray transaction_array; /* store serialized transaction */
+    
+    if (isStakingOnlyUnlocked()) {
+        return StakingOnlyUnlocked;
+    }
+
+    if (isStakingOnlyUnlocked())
+    {
+        return StakingOnlyUnlocked;
+    }
 
     {
         std::vector<std::pair<std::string, std::string>> vOrderForm;
@@ -329,9 +348,13 @@ WalletModel::EncryptionStatus WalletModel::getEncryptionStatus() const
     {
         return Locked;
     }
-    else if(m_wallet->isLocked())
+    else if(m_wallet->isLockedForStaking()) 
     {
-        return UnlockedForMixingOnly;
+        return UnlockedForStakingOnly;
+    }
+    else if(m_wallet->isLockedForStaking()) 
+    {
+        return UnlockedForStakingOnly;
     }
     else
     {
@@ -353,7 +376,7 @@ bool WalletModel::setWalletEncrypted(bool encrypted, const SecureString &passphr
     }
 }
 
-bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, bool fMixing)
+bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, bool stakingOnly)
 {
     if(locked)
     {
@@ -363,8 +386,13 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, b
     else
     {
         // Unlock
-        return m_wallet->unlock(passPhrase, fMixing);
+        return m_wallet->unlock(passPhrase, stakingOnly);
     }
+}
+
+bool WalletModel::isStakingOnlyUnlocked()
+{
+    return m_wallet->isLockedForStaking();
 }
 
 bool WalletModel::changePassphrase(const SecureString &oldPass, const SecureString &newPass)
@@ -436,61 +464,38 @@ void WalletModel::unsubscribeFromCoreSignals()
 }
 
 // WalletModel::UnlockContext implementation
-WalletModel::UnlockContext WalletModel::requestUnlock(bool fForMixingOnly)
+WalletModel::UnlockContext WalletModel::requestUnlock()
 {
-    // Dash
-    //bool was_locked = getEncryptionStatus() == Locked;
-    EncryptionStatus encStatusOld = getEncryptionStatus();
-
-    // Wallet was completely locked
-    bool was_locked = (encStatusOld == Locked);
-    // Wallet was unlocked for mixing
-    bool was_mixing = (encStatusOld == UnlockedForMixingOnly);
-    // Wallet was unlocked for mixing and now user requested to fully unlock it
-    bool fMixingToFullRequested = !fForMixingOnly && was_mixing;
-
-    //if(was_locked)
-    if(was_locked || fMixingToFullRequested)
-    //
+    bool was_locked = getEncryptionStatus() == Locked;
+    
+    if (!was_locked && isStakingOnlyUnlocked()) {
+        setWalletLocked(true);
+        was_locked = getEncryptionStatus() == Locked;
+    }
+    
+    if(was_locked)
     {
         // Request UI to unlock wallet
-        //Q_EMIT requireUnlock();
-        Q_EMIT requireUnlock(fForMixingOnly);
+        Q_EMIT requireUnlock();
     }
-
     // If wallet is still locked, unlock was failed or cancelled, mark context as invalid
-    //bool valid = getEncryptionStatus() != Locked;
-    EncryptionStatus encStatusNew = getEncryptionStatus();
+    bool valid = getEncryptionStatus() != Locked;
 
-    // Wallet was locked, user requested to unlock it for mixing and failed to do so
-    bool fMixingUnlockFailed = fForMixingOnly && !(encStatusNew == UnlockedForMixingOnly);
-    // Wallet was unlocked for mixing, user requested to fully unlock it and failed
-    bool fMixingToFullFailed = fMixingToFullRequested && !(encStatusNew == Unlocked);
-    // If wallet is still locked, unlock failed or was cancelled, mark context as invalid
-    bool fInvalid = (encStatusNew == Locked) || fMixingUnlockFailed || fMixingToFullFailed;
-    // Wallet was not locked in any way or user tried to unlock it for mixing only and succeeded, keep it unlocked
-    bool fKeepUnlocked = !was_locked || (fForMixingOnly && !fMixingUnlockFailed);
-
-    //return UnlockContext(this, valid, was_locked);
-    return UnlockContext(this, !fInvalid, !fKeepUnlocked, was_mixing);
-    //
+    return UnlockContext(this, valid, was_locked);
 }
 
-WalletModel::UnlockContext::UnlockContext(WalletModel *_wallet, bool _valid, bool _relock, bool was_mixing):
+WalletModel::UnlockContext::UnlockContext(WalletModel *_wallet, bool _valid, bool _relock):
         wallet(_wallet),
         valid(_valid),
-        relock(_relock),
-        // Dash
-        was_mixing(was_mixing)
-        //
+        relock(_relock)
 {
 }
 
 WalletModel::UnlockContext::~UnlockContext()
 {
-    if(valid && (relock || was_mixing))
+    if(valid && relock)
     {
-        wallet->setWalletLocked(true, "", was_mixing);
+        wallet->setWalletLocked(true);
     }
 }
 
@@ -499,9 +504,6 @@ void WalletModel::UnlockContext::CopyFrom(const UnlockContext& rhs)
     // Transfer context; old object no longer relocks wallet
     *this = rhs;
     rhs.relock = false;
-    // Dash
-    rhs.was_mixing = false;
-    //
 }
 
 void WalletModel::loadReceiveRequests(std::vector<std::string>& vReceiveRequests)
