@@ -139,16 +139,15 @@ public:
         TransactionCreationFailed, // Error returned when wallet is still locked
         TransactionCommitFailed,
         AbsurdFee,
-        PaymentRequestExpired
+        PaymentRequestExpired,
+        StakingOnlyUnlocked
     };
 
     enum EncryptionStatus
     {
         Unencrypted,  // !wallet->IsCrypted()
         Locked,       // wallet->IsCrypted() && wallet->IsLocked()
-        // Dash
-        UnlockedForMixingOnly,  // wallet->IsCrypted() && !wallet->IsLocked(true) && wallet->IsLocked()
-        //
+        UnlockedForStakingOnly, // wallet->IsCrypted() && !wallet->IsLocked() && wallet->fWalletUnlockStakingOnly
         Unlocked      // wallet->IsCrypted() && !wallet->IsLocked()
     };
 
@@ -186,11 +185,14 @@ public:
     bool setWalletLocked(bool locked, const SecureString &passPhrase=SecureString(), bool fMixing=false);
     bool changePassphrase(const SecureString &oldPass, const SecureString &newPass);
 
+    // Is wallet unlocked for staking only?
+    bool isStakingOnlyUnlocked();
+
     // RAI object for unlocking wallet, returned by requestUnlock()
     class UnlockContext
     {
     public:
-        UnlockContext(WalletModel *wallet, bool valid, bool relock, bool was_mixing);
+        UnlockContext(WalletModel *wallet, bool valid, bool relock);
         ~UnlockContext();
 
         bool isValid() const { return valid; }
@@ -202,17 +204,11 @@ public:
         WalletModel *wallet;
         bool valid;
         mutable bool relock; // mutable, as it can be set to false by copying
-        // Dash
-        mutable bool was_mixing; // mutable, as it can be set to false by copying
-        //
-
         void CopyFrom(const UnlockContext& rhs);
     };
 
-    // Dash
     //UnlockContext requestUnlock();
-    UnlockContext requestUnlock(bool fForMixingOnly = false);
-    //
+    UnlockContext requestUnlock();
 
     void loadReceiveRequests(std::vector<std::string>& vReceiveRequests);
     bool saveReceiveRequest(const std::string &sAddress, const int64_t nId, const std::string &sRequest);

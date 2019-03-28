@@ -94,6 +94,7 @@ private:
     WalletFrame* walletFrame = nullptr;
 
     UnitDisplayStatusBarControl* unitDisplayControl = nullptr;
+    QLabel* labelStakingIcon = nullptr;
     QLabel* labelWalletEncryptionIcon = nullptr;
     QLabel* labelWalletHDStatusIcon = nullptr;
     QLabel* labelProxyIcon = nullptr;
@@ -214,6 +215,7 @@ public Q_SLOTS:
     /** Set the UI status indicators based on the currently selected wallet.
     */
     void updateWalletStatus();
+    void setStakingStatus();
 
 private:
     /** Set the encryption status as shown in the UI.
