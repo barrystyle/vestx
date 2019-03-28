@@ -28,19 +28,17 @@
 #include <qt/walletmodel.h>
 #endif
 
-// Dash
-#include <masternodeconfig.h>
-//
-
+#include <init.h>
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
+#include <interfaces/wallet.h>
 #include <rpc/server.h>
 #include <ui_interface.h>
 #include <uint256.h>
 #include <util.h>
 #include <warnings.h>
-
 #include <walletinitinterface.h>
+#include <masternodeconfig.h>
 
 #include <memory>
 #include <stdint.h>
@@ -56,6 +54,8 @@
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
+#include <QSslConfiguration>
+#include <QProcess>
 
 #if defined(QT_STATICPLUGIN)
 #include <QtPlugin>

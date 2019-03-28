@@ -43,10 +43,7 @@ QT_FORMS_UI = \
   qt/forms/sendcoinsdialog.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
-  qt/forms/transactiondescdialog.ui
-
-# Dash
-QT_FORMS_UI += \
+  qt/forms/transactiondescdialog.ui \
   qt/forms/masternodelist.ui
 
 QT_MOC_CPP = \
@@ -95,10 +92,7 @@ QT_MOC_CPP = \
   qt/moc_utilitydialog.cpp \
   qt/moc_walletframe.cpp \
   qt/moc_walletmodel.cpp \
-  qt/moc_walletview.cpp
-
-# Dash
-QT_MOC_CPP += \
+  qt/moc_walletview.cpp \
   qt/moc_masternodelist.cpp
 
 BITCOIN_MM = \
@@ -106,6 +100,7 @@ BITCOIN_MM = \
   qt/macnotificationhandler.mm
 
 QT_MOC = \
+  qt/bitcoin.moc \
   qt/bitcoinamountfield.moc \
   qt/callback.moc \
   qt/intro.moc \
@@ -174,10 +169,7 @@ BITCOIN_QT_H = \
   qt/walletmodel.h \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
-  qt/winshutdownmonitor.h
-
-# Dash
-BITCOIN_QT_H += \
+  qt/winshutdownmonitor.h \
   qt/masternodelist.h
 
 RES_ICONS = \
@@ -240,10 +232,7 @@ RES_ICONS = \
   qt/res/icons/tx_output.png \
   qt/res/icons/tx_mined.png \
   qt/res/icons/warning.png \
-  qt/res/icons/verify.png
-
-# Dash
-RES_ICONS += \
+  qt/res/icons/verify.png \
   qt/res/icons/masternodes.png
 
 BITCOIN_QT_BASE_CPP = \
@@ -298,10 +287,7 @@ BITCOIN_QT_WALLET_CPP = \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
-  qt/walletview.cpp
-
-# Dash
-BITCOIN_QT_WALLET_CPP += \
+  qt/walletview.cpp \
   qt/masternodelist.cpp
 
 BITCOIN_QT_CPP = $(BITCOIN_QT_BASE_CPP)
@@ -312,13 +298,53 @@ if ENABLE_WALLET
 BITCOIN_QT_CPP += $(BITCOIN_QT_WALLET_CPP)
 endif
 
-RES_IMAGES =
-
-RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.png)
+RES_MOVIES = \
+    qt/res/movies/spinner-000.png \
+    qt/res/movies/spinner-001.png \
+    qt/res/movies/spinner-002.png \
+    qt/res/movies/spinner-003.png \
+    qt/res/movies/spinner-004.png \
+    qt/res/movies/spinner-005.png \
+    qt/res/movies/spinner-006.png \
+    qt/res/movies/spinner-007.png \
+    qt/res/movies/spinner-008.png \
+    qt/res/movies/spinner-009.png \
+    qt/res/movies/spinner-010.png \
+    qt/res/movies/spinner-011.png \
+    qt/res/movies/spinner-012.png \
+    qt/res/movies/spinner-013.png \
+    qt/res/movies/spinner-014.png \
+    qt/res/movies/spinner-015.png \
+    qt/res/movies/spinner-016.png \
+    qt/res/movies/spinner-017.png \
+    qt/res/movies/spinner-018.png \
+    qt/res/movies/spinner-019.png \
+    qt/res/movies/spinner-020.png \
+    qt/res/movies/spinner-021.png \
+    qt/res/movies/spinner-022.png \
+    qt/res/movies/spinner-023.png \
+    qt/res/movies/spinner-024.png \
+    qt/res/movies/spinner-025.png \
+    qt/res/movies/spinner-026.png \
+    qt/res/movies/spinner-027.png \
+    qt/res/movies/spinner-028.png \
+    qt/res/movies/spinner-029.png \
+    qt/res/movies/spinner-030.png \
+    qt/res/movies/spinner-031.png \
+    qt/res/movies/spinner-032.png \
+    qt/res/movies/spinner-033.png \
+    qt/res/movies/spinner-034.png \
+    qt/res/movies/spinner-035.png
 
 BITCOIN_RC = qt/res/vestx-qt-res.rc
 
-BITCOIN_QT_INCLUDES = -DQT_NO_KEYWORDS
+# Most files will depend on the forms and moc files as includes. Generate them
+# before anything else.
+$(QT_MOC): $(QT_FORMS_H)
+$(qt_libbitcoinqt_a_OBJECTS) $(qt_bitcoin_qt_OBJECTS) : | $(QT_MOC)
+
+BITCOIN_QT_INCLUDES = -I$(builddir)/qt -I$(srcdir)/qt -I$(srcdir)/qt/forms \
+  -I$(builddir)/qt/forms -DQT_NO_KEYWORDS
 
 qt_libbitcoinqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(BITCOIN_QT_INCLUDES) \
   $(QT_INCLUDES) $(QT_DBUS_INCLUDES) $(PROTOBUF_CFLAGS) $(QR_CFLAGS)
@@ -333,11 +359,6 @@ nodist_qt_libbitcoinqt_a_SOURCES = $(QT_MOC) $(QT_MOC_CPP) $(PROTOBUF_CC) \
 
 # forms/foo.h -> forms/ui_foo.h
 QT_FORMS_H=$(join $(dir $(QT_FORMS_UI)),$(addprefix ui_, $(notdir $(QT_FORMS_UI:.ui=.h))))
-
-# Most files will depend on the forms and moc files as includes. Generate them
-# before anything else.
-$(QT_MOC): $(QT_FORMS_H)
-$(qt_libbitcoinqt_a_OBJECTS) $(qt_bitcoin_qt_OBJECTS) : | $(QT_MOC)
 
 #Generating these with a half-written protobuf header leads to wacky results.
 #This makes sure it's done.
@@ -374,7 +395,7 @@ QT_QM=$(QT_TS:.ts=.qm)
 
 SECONDARY: $(QT_QM)
 
-$(srcdir)/qt/bitcoinstrings.cpp: $(libbitcoin_server_a_SOURCES) $(libbitcoin_wallet_a_SOURCES) $(libbitcoin_common_a_SOURCES) $(libbitcoin_zmq_a_SOURCES) $(libbitcoin_consensus_a_SOURCES) $(libbitcoin_util_a_SOURCES)
+$(srcdir)/qt/bitcoinstrings.cpp: $(libvestx_server_a_SOURCES) $(libvestx_wallet_a_SOURCES) $(libvestx_common_a_SOURCES) $(libvestx_zmq_a_SOURCES) $(libvestx_consensus_a_SOURCES) $(libvestx_util_a_SOURCES)
 	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"
 	$(AM_V_GEN) cd $(srcdir); XGETTEXT=$(XGETTEXT) PACKAGE_NAME="$(PACKAGE_NAME)" COPYRIGHT_HOLDERS="$(COPYRIGHT_HOLDERS)" COPYRIGHT_HOLDERS_SUBSTITUTION="$(COPYRIGHT_HOLDERS_SUBSTITUTION)" $(PYTHON) ../share/qt/extract_strings_qt.py $^
 
@@ -394,14 +415,14 @@ $(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES) 
 	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) -name bitcoin $< | \
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
 
-CLEAN_QT = $(nodist_qt_libbitcoinqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda qt/*.gcno qt/temp_bitcoin_locale.qrc
+CLEAN_QT = $(nodist_qt_libvestxqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda qt/*.gcno qt/temp_bitcoin_locale.qrc
 
 CLEANFILES += $(CLEAN_QT)
 
 bitcoin_qt_clean: FORCE
-	rm -f $(CLEAN_QT) $(qt_libbitcoinqt_a_OBJECTS) $(qt_vestx_qt_OBJECTS) qt/vestx-qt$(EXEEXT) $(LIBBITCOINQT)
+	rm -f $(CLEAN_QT) $(qt_libvestxqt_a_OBJECTS) $(qt_vestx_qt_OBJECTS) qt/vestx-qt$(EXEEXT) $(LIBBITCOINQT)
 
-bitcoin_qt : $(nodist_qt_libbitcoinqt_a_SOURCES) qt/vestx-qt$(EXEEXT)
+bitcoin_qt : $(nodist_qt_libvestxqt_a_SOURCES) qt/vestx-qt$(EXEEXT)
 
 ui_%.h: %.ui
 	@test -f $(UIC)
@@ -420,3 +441,4 @@ moc_%.cpp: %.h
 	@test -f $(LRELEASE)
 	@$(MKDIR_P) $(@D)
 	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LRELEASE) -silent $< -qm $@
+
