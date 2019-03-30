@@ -65,7 +65,7 @@ public:
     CMainParams() {
         strNetworkID = "main";
 
-        consensus.nLastPoWBlock = 300;
+        consensus.nFirstPoSBlock = 300;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -77,8 +77,8 @@ public:
         consensus.nGovernanceFilterElements = 20000;
         consensus.BIP34Height = 10;
         consensus.BIP34Hash = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
-        consensus.BIP65Height = consensus.nLastPoWBlock;
-        consensus.BIP66Height = consensus.nLastPoWBlock;
+        consensus.BIP65Height = consensus.nFirstPoSBlock;
+        consensus.BIP66Height = consensus.nFirstPoSBlock;
         consensus.powLimit = uint256S("0000ffff00000000000000000000000000000000000000000000000000000000");
         consensus.nPowTargetTimespan = 2 * 60;
         consensus.nPowTargetSpacing = 40;
@@ -195,7 +195,7 @@ public:
 	uint32_t start_of_day = current_time - elapsed_day;
 	uint32_t quadrant = start_of_day % 10800;
 
-        consensus.nLastPoWBlock = 300;
+        consensus.nFirstPoSBlock = 300;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -207,8 +207,8 @@ public:
         consensus.nGovernanceFilterElements = 20000;
         consensus.BIP34Height = 10;
         consensus.BIP34Hash = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
-        consensus.BIP65Height = consensus.nLastPoWBlock;
-        consensus.BIP66Height = consensus.nLastPoWBlock;
+        consensus.BIP65Height = consensus.nFirstPoSBlock;
+        consensus.BIP66Height = consensus.nFirstPoSBlock;
         consensus.powLimit = uint256S("0000ffff00000000000000000000000000000000000000000000000000000000");
         consensus.nPowTargetTimespan = 2 * 60;
         consensus.nPowTargetSpacing = 40;

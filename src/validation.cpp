@@ -1847,11 +1847,6 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         return true;
     }
 
-    if (pindex->nHeight > Params().GetConsensus().nLastPoWBlock && block.IsProofOfWork()) {
-        return state.DoS(100, error("ConnectBlock() : PoW period ended"),
-                         REJECT_INVALID, "PoW-ended");
-    }
-
     nBlocksTotal++;
 
     bool fScriptChecks = true;
@@ -2093,7 +2088,14 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         return state.DoS(0, error("ConnectBlock(VESTX): %s", strError), REJECT_INVALID, "bad-cb-amount");
     }
 
-    const auto& coinbaseTransaction = (pindex->nHeight > Params().GetConsensus().nLastPoWBlock ? block.vtx[1] : block.vtx[0]);
+    //////////////////////////////////////////////////////////////////////////////
+    bool isPoWBlock = block.IsProofOfWork();
+    if (isPoWBlock)
+       LogPrintf("ConnectBlock::Block is proof of work.\n");
+    else
+       LogPrintf("ConnectBlock::Block is proof of stake.\n");
+    const auto& coinbaseTransaction = (!isPoWBlock ? block.vtx[1] : block.vtx[0]);
+    //////////////////////////////////////////////////////////////////////////////
 
     if (!IsBlockPayeeValid(coinbaseTransaction, pindex->nHeight, expectedReward, pindex->nMint)) {
         //        mapRejectedBlocks.insert(std::make_pair(block.GetHash(), GetTime()));
@@ -3008,9 +3010,10 @@ static void AcceptProofOfStakeBlock(const CBlock &block, CBlockIndex *pindexNew)
         LogPrintf("AcceptProofOfStakeBlock() : ComputeNextStakeModifier() failed \n");
     pindexNew->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
     pindexNew->nStakeModifierChecksum = GetStakeModifierChecksum(pindexNew);
-    LogPrintf("pindexNew->nStakeModifierChecksum = %08x\n", pindexNew->nStakeModifierChecksum);
-    if (!CheckStakeModifierCheckpoints(pindexNew->nHeight, pindexNew->nStakeModifierChecksum))
+    if (!CheckStakeModifierCheckpoints(pindexNew->nHeight, pindexNew->nStakeModifierChecksum)) {
         LogPrintf("AcceptProofOfStakeBlock() : Rejected by stake modifier checkpoint height=%d, modifier=%s \n", pindexNew->nHeight, std::to_string(nStakeModifier));
+        LogPrintf("pindexNew->nStakeModifierChecksum = %08x\n", pindexNew->nStakeModifierChecksum);
+    }
 
     setDirtyBlockIndex.insert(pindexNew);
 }

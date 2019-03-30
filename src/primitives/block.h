@@ -77,6 +77,8 @@ public:
     std::vector<unsigned char> vchBlockSig;
 
     // memory only
+    mutable CTxOut txoutMasternode;
+    mutable std::vector<CTxOut> voutSuperblock;
     mutable bool fChecked;
 
     CBlock()

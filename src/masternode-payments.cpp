@@ -49,7 +49,14 @@ bool IsBlockValueValid(const CBlock& block, int nBlockHeight, CAmount expectedRe
 {
     strErrorRet = "";
 
-    const auto& coinbaseTransaction = (nBlockHeight > Params().GetConsensus().nLastPoWBlock ? block.vtx[1] : block.vtx[0]);
+    //////////////////////////////////////////////////////////////////////////////
+    bool isPoWBlock = block.IsProofOfWork();
+    if (isPoWBlock)
+       LogPrintf("IsBlockValueValid::Block is proof of work.\n");
+    else
+       LogPrintf("IsBlockValueValid::Block is proof of stake.\n");
+    const auto& coinbaseTransaction = (!isPoWBlock ? block.vtx[1] : block.vtx[0]);
+    //////////////////////////////////////////////////////////////////////////////
 
     bool isBlockRewardValueMet = (actualReward <= expectedReward);
     LogPrint(BCLog::MNPAYMENTS, "actualReward %lld <= blockReward %lld\n", actualReward, expectedReward);

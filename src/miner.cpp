@@ -21,6 +21,7 @@
 #include <pow.h>
 #include <primitives/transaction.h>
 #include <script/standard.h>
+#include <spork.h>
 #include <timedata.h>
 #include <util.h>
 #include <utilmoneystr.h>
@@ -172,7 +173,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, 
     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
     CAmount blockReward = GetBlockSubsidy(pindexPrev->nHeight, Params().GetConsensus());
     std::vector<const CWalletTx*> vwtxPrev;
-    if(fProofOfStake)
+    LogPrintf("fProofOfStake %d sporkManager.IsSporkActive %d\n", fProofOfStake, !sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED));
+    if(fProofOfStake && !sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED))
     {
         assert(wallet);
         boost::this_thread::interruption_point();
@@ -562,19 +564,13 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
 
             if(fProofOfStake)
             {
-                if (chainActive.Tip()->nHeight < chainparams.GetConsensus().nLastPoWBlock ||
-                        pwallet->IsLocked() || !masternodeSync.IsSynced())
+                if (chainActive.Tip()->nHeight < chainparams.GetConsensus().nFirstPoSBlock ||
+                    pwallet->IsLocked() || !masternodeSync.IsSynced())
                 {
                     nLastCoinStakeSearchInterval = 0;
                     MilliSleep(5000);
                     continue;
                 }
-
-            }
-
-            if(!fProofOfStake && chainActive.Tip()->nHeight >= chainparams.GetConsensus().nLastPoWBlock)
-            {
-                return;
             }
 
             //
