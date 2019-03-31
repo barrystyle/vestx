@@ -3404,6 +3404,33 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     return true;
 }
 
+bool CheckBlockRatio(const CBlock& block, const CBlockIndex* pindexPrev) {
+
+    const int prevRatioLimit  = 3;
+    const int prevBlockWindow = 5;
+    int nTotalPoW = 0, nTotalPoS = 0;
+
+    for (int i = 0; i < prevBlockWindow; i++) {
+        if (pindexPrev->IsProofOfWork())
+            nTotalPoW++;
+        else
+            nTotalPoS++;
+        pindexPrev = pindexPrev->pprev;
+    }
+
+    // see if we've got too many of either
+    if (block.IsProofOfWork() && nTotalPoW == prevRatioLimit) {
+        LogPrintf("Too many PoW blocks\n");
+        return false;
+    } else if (block.IsProofOfStake() && nTotalPoS == prevRatioLimit) {
+        LogPrintf("Too many PoS blocks\n");
+        return false;
+    }
+
+    // if we're here, everything is great
+    return true;
+}
+
 /** NOTE: We need this function in order to place the commitment into the coinstake as last CTxOut.
  * The problem is that when we were building the witness commitment our coinstake was without extra output.
  * We will hack here in order to get correct hash without commitment.
@@ -3498,6 +3525,10 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
         // Coinbase output should be empty if proof-of-stake block
         if (!block.vtx[0]->vout[0].IsEmpty())
             return state.DoS(100, error("CheckBlock() : coinbase output not empty for proof-of-stake block"));
+    }
+
+    if (pindexPrev->nHeight >= Params().GetConsensus().nFirstPoSBlock && !CheckBlockRatio(block, pindexPrev)) {
+        return state.DoS(100, false, REJECT_INVALID, "upset-ratio", false, strprintf("too many pow/pos blocks in recent window"));
     }
 
     // No witness data is allowed in blocks that don't commit to witness data, as this would otherwise leave room for spam
