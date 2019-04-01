@@ -3414,38 +3414,38 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     return true;
 }
 
-bool CheckBlockRatio(const CBlock& block, const CBlockIndex* pindexPrev) {
-
-    if (sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED)) return true;
-
-    const int prevRatioLimit  = 4;
-    const int prevBlockWindow = 7;
-    int nTotalPoW = 0, nTotalPoS = 0;
-
-    for (int i = 0; i < prevBlockWindow; i++) {
-        if (pindexPrev->IsProofOfWork()) {
-            nTotalPoW++;
-            LogPrintf("PoW ");
-        } else {
-            nTotalPoS++;
-            LogPrintf("PoS ");
-        }
-        pindexPrev = pindexPrev->pprev;
-    }
-    LogPrintf("\n");
-
-    // see if we've got too many of either
-    if (block.IsProofOfWork() && nTotalPoW == prevRatioLimit) {
-        LogPrintf("Too many PoW blocks\n");
-        return false;
-    } else if (block.IsProofOfStake() && nTotalPoS == prevRatioLimit) {
-        LogPrintf("Too many PoS blocks\n");
-        return false;
-    }
-
-    // if we're here, everything is great
-    return true;
-}
+//bool CheckBlockRatio(const CBlock& block, const CBlockIndex* pindexPrev) {
+//
+//      if (sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED)) return true;
+//
+//      const int prevRatioLimit  = 4;
+//      const int prevBlockWindow = 7;
+//      int nTotalPoW = 0, nTotalPoS = 0;
+//
+//      for (int i = 0; i < prevBlockWindow; i++) {
+//          if (pindexPrev->IsProofOfWork()) {
+//             nTotalPoW++;
+//             LogPrintf("PoW ");
+//          } else {
+//             nTotalPoS++;
+//             LogPrintf("PoS ");
+//          }
+//          pindexPrev = pindexPrev->pprev;
+//      }
+//      LogPrintf("\n");
+//
+//      // see if we've got too many of either
+//      if (block.IsProofOfWork() && nTotalPoW == prevRatioLimit) {
+//          LogPrintf("Too many PoW blocks\n");
+//          return false;
+//      } else if (block.IsProofOfStake() && nTotalPoS == prevRatioLimit) {
+//          LogPrintf("Too many PoS blocks\n");
+//          return false;
+//      }
+//
+//      // if we're here, everything is great
+//      return true;
+//}
 
 /** NOTE: We need this function in order to place the commitment into the coinstake as last CTxOut.
  * The problem is that when we were building the witness commitment our coinstake was without extra output.
@@ -3543,9 +3543,9 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
             return state.DoS(100, error("CheckBlock() : coinbase output not empty for proof-of-stake block"));
     }
 
-    if (pindexPrev->nHeight >= Params().GetConsensus().nFirstPoSBlock && !CheckBlockRatio(block, pindexPrev)) {
-        return state.DoS(100, false, REJECT_INVALID, "upset-ratio", false, strprintf("too many pow/pos blocks in recent window"));
-    }
+//  if (pindexPrev->nHeight >= Params().GetConsensus().nFirstPoSBlock && !CheckBlockRatio(block, pindexPrev)) {
+//      return state.DoS(100, false, REJECT_INVALID, "upset-ratio", false, strprintf("too many pow/pos blocks in recent window"));
+//  }
 
     // No witness data is allowed in blocks that don't commit to witness data, as this would otherwise leave room for spam
     if (!fHaveWitness) {

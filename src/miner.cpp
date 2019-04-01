@@ -14,7 +14,11 @@
 #include <consensus/merkle.h>
 #include <consensus/validation.h>
 #include <hash.h>
+#include <key_io.h>
 #include <validation.h>
+#include <masternode.h>
+#include <masternodeman.h>
+#include <masternode-payments.h>
 #include <net.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
@@ -203,7 +207,44 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, 
     }
     else
     {
-        coinbaseTx.vout[0].nValue = nFees + blockReward;
+
+        if (nHeight <= Params().GetConsensus().nFirstPoSBlock) {
+
+		coinbaseTx.vout[0].nValue = nFees + blockReward;
+
+        } else {
+
+		// masternode payment
+
+		bool hasPayment = true;
+		CScript payee;
+
+		if (!mnpayments.GetBlockPayee(nHeight, payee)) {
+			int nCount = 0;
+			masternode_info_t mnInfo;
+			if(!mnodeman.GetNextMasternodeInQueueForPayment(pindexPrev->nHeight + 1, true, nCount, mnInfo)) {
+				payee = GetScriptForDestination(mnInfo.pubKeyCollateralAddress.GetID());
+			} else {
+				LogPrint(BCLog::MNPAYMENTS, "CreateNewBlock: Failed to detect masternode to pay\n");
+				hasPayment = false;
+			}
+		}
+
+		CAmount masternodePayment = GetMasternodePayment(nHeight, blockReward);
+
+		if (hasPayment) {
+			coinbaseTx.vout.resize(2);
+			coinbaseTx.vout[1].scriptPubKey = payee;
+			coinbaseTx.vout[1].nValue = masternodePayment;
+			coinbaseTx.vout[0].nValue = blockReward - masternodePayment;
+		}
+
+		CTxDestination address1;
+		ExtractDestination(payee, address1);
+		CBitcoinAddress address2(address1);
+		LogPrintf("CreateNewBlock::FillBlockPayee -- Masternode payment %lld to %s\n",
+			  masternodePayment, EncodeDestination(address1));
+         }
     }
 
     int nPackagesSelected = 0;
