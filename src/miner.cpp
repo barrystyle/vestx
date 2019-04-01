@@ -173,7 +173,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, 
     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
     CAmount blockReward = GetBlockSubsidy(pindexPrev->nHeight, Params().GetConsensus());
     std::vector<const CWalletTx*> vwtxPrev;
-    LogPrintf("fProofOfStake %d sporkManager.IsSporkActive %d\n", fProofOfStake, !sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED));
     if(fProofOfStake && !sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED))
     {
         assert(wallet);

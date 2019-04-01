@@ -195,7 +195,7 @@ private:
     bool ActivateBestChainStep(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexMostWork, const std::shared_ptr<const CBlock>& pblock, bool& fInvalidFound, ConnectTrace& connectTrace);
     bool ConnectTip(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexNew, const std::shared_ptr<const CBlock>& pblock, ConnectTrace& connectTrace, DisconnectedBlockTransactions &disconnectpool);
 
-    CBlockIndex* AddToBlockIndex(const CBlockHeader& block);
+    CBlockIndex* AddToBlockIndex(const CBlockHeader& block, bool fProofOfStake = false);
     /** Create a new block index entry for a given block hash */
     CBlockIndex * InsertBlockIndex(const uint256& hash);
     /**
@@ -3020,7 +3020,7 @@ static void AcceptProofOfStakeBlock(const CBlock &block, CBlockIndex *pindexNew)
     setDirtyBlockIndex.insert(pindexNew);
 }
 
-CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
+CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block, bool fProofOfStake)
 {
     AssertLockHeld(cs_main);
 
@@ -3046,6 +3046,10 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
         pindexNew->BuildSkip();
     }
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
+
+    if (fProofOfStake)
+        pindexNew->SetProofOfStake();
+
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     pindexNew->RaiseValidity(BLOCK_VALID_TREE);
     if (pindexBestHeader == nullptr || pindexBestHeader->nChainWork < pindexNew->nChainWork)
@@ -3412,19 +3416,23 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 
 bool CheckBlockRatio(const CBlock& block, const CBlockIndex* pindexPrev) {
 
-    const int prevRatioLimit  = 3;
-    const int prevBlockWindow = 5;
+    if (sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED)) return true;
+
+    const int prevRatioLimit  = 4;
+    const int prevBlockWindow = 7;
     int nTotalPoW = 0, nTotalPoS = 0;
 
     for (int i = 0; i < prevBlockWindow; i++) {
-        if (pindexPrev->IsProofOfWork())
+        if (pindexPrev->IsProofOfWork()) {
             nTotalPoW++;
-        else
+            LogPrintf("PoW ");
+        } else {
             nTotalPoS++;
+            LogPrintf("PoS ");
+        }
         pindexPrev = pindexPrev->pprev;
     }
-
-    LogPrintf("* Past %d block history - PoW %d PoS %d\n", prevBlockWindow, nTotalPoW, nTotalPoS);
+    LogPrintf("\n");
 
     // see if we've got too many of either
     if (block.IsProofOfWork() && nTotalPoW == prevRatioLimit) {
