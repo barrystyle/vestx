@@ -365,6 +365,8 @@ void CMasternode::UpdateLastPaid(const CBlockIndex *pindex, int nMaxBlocksToScan
                LogPrintf("UpdateLastPaid::Block is proof of work.\n");
             else
                LogPrintf("UpdateLastPaid::Block is proof of stake.\n");
+            LogPrintf("coinbaseTransaction will be %s\n",
+                      !isPoWBlock ? "block.vtx[1]" : "block.vtx[0]");
             const auto& coinbaseTransaction = (!isPoWBlock ? block.vtx[1] : block.vtx[0]);
             //////////////////////////////////////////////////////////////////////////////
 

@@ -564,7 +564,7 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
 
             if(fProofOfStake)
             {
-                if (chainActive.Tip()->nHeight < chainparams.GetConsensus().nFirstPoSBlock ||
+                if (chainActive.Tip()->nHeight+1 < chainparams.GetConsensus().nFirstPoSBlock ||
                     pwallet->IsLocked() || !masternodeSync.IsSynced())
                 {
                     nLastCoinStakeSearchInterval = 0;

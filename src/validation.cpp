@@ -2094,6 +2094,8 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
        LogPrintf("ConnectBlock::Block is proof of work.\n");
     else
        LogPrintf("ConnectBlock::Block is proof of stake.\n");
+    LogPrintf("coinbaseTransaction will be %s\n",
+	      !isPoWBlock ? "block.vtx[1]" : "block.vtx[0]");
     const auto& coinbaseTransaction = (!isPoWBlock ? block.vtx[1] : block.vtx[0]);
     //////////////////////////////////////////////////////////////////////////////
 
@@ -3368,8 +3370,12 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 
     // Check proof of work
     const Consensus::Params& consensusParams = params.GetConsensus();
-    if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
+    if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams)) {
+        LogPrintf("nbits %08x expected %08x\n",
+                 block.nBits,
+                 GetNextWorkRequired(pindexPrev, &block, consensusParams));
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false, "incorrect proof of work");
+    }
 
     // Check against checkpoints
     if (fCheckpointsEnabled) {
@@ -3417,6 +3423,8 @@ bool CheckBlockRatio(const CBlock& block, const CBlockIndex* pindexPrev) {
             nTotalPoS++;
         pindexPrev = pindexPrev->pprev;
     }
+
+    LogPrintf("* Past %d block history - PoW %d PoS %d\n", prevBlockWindow, nTotalPoW, nTotalPoS);
 
     // see if we've got too many of either
     if (block.IsProofOfWork() && nTotalPoW == prevRatioLimit) {
