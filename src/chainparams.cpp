@@ -65,7 +65,7 @@ public:
     CMainParams() {
         strNetworkID = "main";
 
-        consensus.nLastPoWBlock = 300;
+        consensus.nFirstPoSBlock = 300;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -77,8 +77,8 @@ public:
         consensus.nGovernanceFilterElements = 20000;
         consensus.BIP34Height = 10;
         consensus.BIP34Hash = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
-        consensus.BIP65Height = consensus.nLastPoWBlock;
-        consensus.BIP66Height = consensus.nLastPoWBlock;
+        consensus.BIP65Height = consensus.nFirstPoSBlock;
+        consensus.BIP66Height = consensus.nFirstPoSBlock;
         consensus.powLimit = uint256S("0000ffff00000000000000000000000000000000000000000000000000000000");
         consensus.nPowTargetTimespan = 2 * 60;
         consensus.nPowTargetSpacing = 40;
@@ -88,7 +88,7 @@ public:
         consensus.nStakeMinAge = 10 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
         consensus.nModifierInterval = 60 * 20;
-        consensus.nCoinbaseMaturity = 15;
+        consensus.nCoinbaseMaturity = 20;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1080;
@@ -161,7 +161,7 @@ public:
         nCollateralLevels = { 50000 };
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60;
-        strSporkPubKey = "02001bf76ee07f03f8327389b1f27bb736a3a68807fbf7367e607f037e2863cab5";
+        strSporkPubKey = "03cfd340c928af09534e019fa5c94ffe4ff36b478d7fa69a71d9365218fe9c2b8c"; // 02042019
 
         checkpointData = {
             {
@@ -195,7 +195,7 @@ public:
 	uint32_t start_of_day = current_time - elapsed_day;
 	uint32_t quadrant = start_of_day % 10800;
 
-        consensus.nLastPoWBlock = 300;
+        consensus.nFirstPoSBlock = 300;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -207,8 +207,8 @@ public:
         consensus.nGovernanceFilterElements = 20000;
         consensus.BIP34Height = 10;
         consensus.BIP34Hash = uint256S("0000000000000000000000000000000000000000000000000000000000000000");
-        consensus.BIP65Height = consensus.nLastPoWBlock;
-        consensus.BIP66Height = consensus.nLastPoWBlock;
+        consensus.BIP65Height = consensus.nFirstPoSBlock;
+        consensus.BIP66Height = consensus.nFirstPoSBlock;
         consensus.powLimit = uint256S("0000ffff00000000000000000000000000000000000000000000000000000000");
         consensus.nPowTargetTimespan = 2 * 60;
         consensus.nPowTargetSpacing = 40;

@@ -195,7 +195,7 @@ private:
     bool ActivateBestChainStep(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexMostWork, const std::shared_ptr<const CBlock>& pblock, bool& fInvalidFound, ConnectTrace& connectTrace);
     bool ConnectTip(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexNew, const std::shared_ptr<const CBlock>& pblock, ConnectTrace& connectTrace, DisconnectedBlockTransactions &disconnectpool);
 
-    CBlockIndex* AddToBlockIndex(const CBlockHeader& block);
+    CBlockIndex* AddToBlockIndex(const CBlockHeader& block, bool fProofOfStake = false);
     /** Create a new block index entry for a given block hash */
     CBlockIndex * InsertBlockIndex(const uint256& hash);
     /**
@@ -1847,11 +1847,6 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         return true;
     }
 
-    if (pindex->nHeight > Params().GetConsensus().nLastPoWBlock && block.IsProofOfWork()) {
-        return state.DoS(100, error("ConnectBlock() : PoW period ended"),
-                         REJECT_INVALID, "PoW-ended");
-    }
-
     nBlocksTotal++;
 
     bool fScriptChecks = true;
@@ -2093,7 +2088,16 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         return state.DoS(0, error("ConnectBlock(VESTX): %s", strError), REJECT_INVALID, "bad-cb-amount");
     }
 
-    const auto& coinbaseTransaction = (pindex->nHeight > Params().GetConsensus().nLastPoWBlock ? block.vtx[1] : block.vtx[0]);
+    //////////////////////////////////////////////////////////////////////////////
+    bool isPoWBlock = block.IsProofOfWork();
+    if (isPoWBlock)
+       LogPrintf("ConnectBlock::Block is proof of work.\n");
+    else
+       LogPrintf("ConnectBlock::Block is proof of stake.\n");
+    LogPrintf("coinbaseTransaction will be %s\n",
+	      !isPoWBlock ? "block.vtx[1]" : "block.vtx[0]");
+    const auto& coinbaseTransaction = (!isPoWBlock ? block.vtx[1] : block.vtx[0]);
+    //////////////////////////////////////////////////////////////////////////////
 
     if (!IsBlockPayeeValid(coinbaseTransaction, pindex->nHeight, expectedReward, pindex->nMint)) {
         //        mapRejectedBlocks.insert(std::make_pair(block.GetHash(), GetTime()));
@@ -3008,14 +3012,15 @@ static void AcceptProofOfStakeBlock(const CBlock &block, CBlockIndex *pindexNew)
         LogPrintf("AcceptProofOfStakeBlock() : ComputeNextStakeModifier() failed \n");
     pindexNew->SetStakeModifier(nStakeModifier, fGeneratedStakeModifier);
     pindexNew->nStakeModifierChecksum = GetStakeModifierChecksum(pindexNew);
-    LogPrintf("pindexNew->nStakeModifierChecksum = %08x\n", pindexNew->nStakeModifierChecksum);
-    if (!CheckStakeModifierCheckpoints(pindexNew->nHeight, pindexNew->nStakeModifierChecksum))
+    if (!CheckStakeModifierCheckpoints(pindexNew->nHeight, pindexNew->nStakeModifierChecksum)) {
         LogPrintf("AcceptProofOfStakeBlock() : Rejected by stake modifier checkpoint height=%d, modifier=%s \n", pindexNew->nHeight, std::to_string(nStakeModifier));
+        LogPrintf("pindexNew->nStakeModifierChecksum = %08x\n", pindexNew->nStakeModifierChecksum);
+    }
 
     setDirtyBlockIndex.insert(pindexNew);
 }
 
-CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
+CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block, bool fProofOfStake)
 {
     AssertLockHeld(cs_main);
 
@@ -3041,6 +3046,10 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
         pindexNew->BuildSkip();
     }
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
+
+    if (fProofOfStake)
+        pindexNew->SetProofOfStake();
+
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     pindexNew->RaiseValidity(BLOCK_VALID_TREE);
     if (pindexBestHeader == nullptr || pindexBestHeader->nChainWork < pindexNew->nChainWork)
@@ -3365,8 +3374,12 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 
     // Check proof of work
     const Consensus::Params& consensusParams = params.GetConsensus();
-    if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams))
+    if (block.nBits != GetNextWorkRequired(pindexPrev, &block, consensusParams)) {
+        LogPrintf("nbits %08x expected %08x\n",
+                 block.nBits,
+                 GetNextWorkRequired(pindexPrev, &block, consensusParams));
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false, "incorrect proof of work");
+    }
 
     // Check against checkpoints
     if (fCheckpointsEnabled) {
@@ -3400,6 +3413,39 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
 
     return true;
 }
+
+//bool CheckBlockRatio(const CBlock& block, const CBlockIndex* pindexPrev) {
+//
+//      if (sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED)) return true;
+//
+//      const int prevRatioLimit  = 4;
+//      const int prevBlockWindow = 7;
+//      int nTotalPoW = 0, nTotalPoS = 0;
+//
+//      for (int i = 0; i < prevBlockWindow; i++) {
+//          if (pindexPrev->IsProofOfWork()) {
+//             nTotalPoW++;
+//             LogPrintf("PoW ");
+//          } else {
+//             nTotalPoS++;
+//             LogPrintf("PoS ");
+//          }
+//          pindexPrev = pindexPrev->pprev;
+//      }
+//      LogPrintf("\n");
+//
+//      // see if we've got too many of either
+//      if (block.IsProofOfWork() && nTotalPoW == prevRatioLimit) {
+//          LogPrintf("Too many PoW blocks\n");
+//          return false;
+//      } else if (block.IsProofOfStake() && nTotalPoS == prevRatioLimit) {
+//          LogPrintf("Too many PoS blocks\n");
+//          return false;
+//      }
+//
+//      // if we're here, everything is great
+//      return true;
+//}
 
 /** NOTE: We need this function in order to place the commitment into the coinstake as last CTxOut.
  * The problem is that when we were building the witness commitment our coinstake was without extra output.
@@ -3496,6 +3542,10 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
         if (!block.vtx[0]->vout[0].IsEmpty())
             return state.DoS(100, error("CheckBlock() : coinbase output not empty for proof-of-stake block"));
     }
+
+//  if (pindexPrev->nHeight >= Params().GetConsensus().nFirstPoSBlock && !CheckBlockRatio(block, pindexPrev)) {
+//      return state.DoS(100, false, REJECT_INVALID, "upset-ratio", false, strprintf("too many pow/pos blocks in recent window"));
+//  }
 
     // No witness data is allowed in blocks that don't commit to witness data, as this would otherwise leave room for spam
     if (!fHaveWitness) {

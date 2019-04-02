@@ -61,7 +61,6 @@ struct Params {
     int nGovernanceMinQuorum; // Min absolute vote count to trigger an action
     int nGovernanceFilterElements;
     int nMasternodeMinimumConfirmations;
-    int nMerchantnodeMinimumConfirmations;
     /* Block hash that is excepted from BIP16 enforcement */
     uint256 BIP16Exception;
     /** Block height and hash at which BIP34 becomes active */
@@ -87,7 +86,7 @@ struct Params {
     int64_t nPowTargetTimespan;
     int64_t nPosTargetSpacing;
     int64_t nPosTargetTimespan;
-    int nLastPoWBlock;
+    int nFirstPoSBlock;
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;

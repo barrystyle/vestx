@@ -359,7 +359,16 @@ void CMasternode::UpdateLastPaid(const CBlockIndex *pindex, int nMaxBlocksToScan
             if(!ReadBlockFromDisk(block, BlockReading, Params().GetConsensus())) // shouldn't really happen
                 continue;
 
-            const auto& coinbaseTransaction = (BlockReading->nHeight > Params().GetConsensus().nLastPoWBlock ? block.vtx[1] : block.vtx[0]);
+            //////////////////////////////////////////////////////////////////////////////
+            bool isPoWBlock = block.IsProofOfWork();
+            if (isPoWBlock)
+               LogPrintf("UpdateLastPaid::Block is proof of work.\n");
+            else
+               LogPrintf("UpdateLastPaid::Block is proof of stake.\n");
+            LogPrintf("coinbaseTransaction will be %s\n",
+                      !isPoWBlock ? "block.vtx[1]" : "block.vtx[0]");
+            const auto& coinbaseTransaction = (!isPoWBlock ? block.vtx[1] : block.vtx[0]);
+            //////////////////////////////////////////////////////////////////////////////
 
             CAmount nMasternodePayment = GetMasternodePayment(BlockReading->nHeight, BlockReading->nMint);
 

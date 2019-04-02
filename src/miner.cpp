@@ -14,13 +14,18 @@
 #include <consensus/merkle.h>
 #include <consensus/validation.h>
 #include <hash.h>
+#include <key_io.h>
 #include <validation.h>
+#include <masternode.h>
+#include <masternodeman.h>
+#include <masternode-payments.h>
 #include <net.h>
 #include <policy/feerate.h>
 #include <policy/policy.h>
 #include <pow.h>
 #include <primitives/transaction.h>
 #include <script/standard.h>
+#include <spork.h>
 #include <timedata.h>
 #include <util.h>
 #include <utilmoneystr.h>
@@ -172,7 +177,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, 
     coinbaseTx.vout[0].scriptPubKey = scriptPubKeyIn;
     CAmount blockReward = GetBlockSubsidy(pindexPrev->nHeight, Params().GetConsensus());
     std::vector<const CWalletTx*> vwtxPrev;
-    if(fProofOfStake)
+    if(fProofOfStake && !sporkManager.IsSporkActive(Spork::SPORK_15_POS_DISABLED))
     {
         assert(wallet);
         boost::this_thread::interruption_point();
@@ -202,7 +207,44 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(CWallet *wallet, 
     }
     else
     {
-        coinbaseTx.vout[0].nValue = nFees + blockReward;
+
+        if (nHeight <= Params().GetConsensus().nFirstPoSBlock) {
+
+		coinbaseTx.vout[0].nValue = nFees + blockReward;
+
+        } else {
+
+		// masternode payment
+
+		bool hasPayment = true;
+		CScript payee;
+
+		if (!mnpayments.GetBlockPayee(nHeight, payee)) {
+			int nCount = 0;
+			masternode_info_t mnInfo;
+			if(!mnodeman.GetNextMasternodeInQueueForPayment(pindexPrev->nHeight + 1, true, nCount, mnInfo)) {
+				payee = GetScriptForDestination(mnInfo.pubKeyCollateralAddress.GetID());
+			} else {
+				LogPrint(BCLog::MNPAYMENTS, "CreateNewBlock: Failed to detect masternode to pay\n");
+				hasPayment = false;
+			}
+		}
+
+		CAmount masternodePayment = GetMasternodePayment(nHeight, blockReward);
+
+		if (hasPayment) {
+			coinbaseTx.vout.resize(2);
+			coinbaseTx.vout[1].scriptPubKey = payee;
+			coinbaseTx.vout[1].nValue = masternodePayment;
+			coinbaseTx.vout[0].nValue = blockReward - masternodePayment;
+		}
+
+		CTxDestination address1;
+		ExtractDestination(payee, address1);
+		CBitcoinAddress address2(address1);
+		LogPrintf("CreateNewBlock::FillBlockPayee -- Masternode payment %lld to %s\n",
+			  masternodePayment, EncodeDestination(address1));
+         }
     }
 
     int nPackagesSelected = 0;
@@ -562,19 +604,13 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
 
             if(fProofOfStake)
             {
-                if (chainActive.Tip()->nHeight < chainparams.GetConsensus().nLastPoWBlock ||
-                        pwallet->IsLocked() || !masternodeSync.IsSynced())
+                if (chainActive.Tip()->nHeight+1 < chainparams.GetConsensus().nFirstPoSBlock ||
+                    pwallet->IsLocked() || !masternodeSync.IsSynced())
                 {
                     nLastCoinStakeSearchInterval = 0;
                     MilliSleep(5000);
                     continue;
                 }
-
-            }
-
-            if(!fProofOfStake && chainActive.Tip()->nHeight >= chainparams.GetConsensus().nLastPoWBlock)
-            {
-                return;
             }
 
             //
