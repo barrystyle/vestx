@@ -215,7 +215,6 @@ public:
 	while (UintToArith256(genesis.GetHash()) > 
                UintToArith256(consensus.powLimit)) {
 	  nNonce++;
-	  if (nNonce % 1024 == 0) printf("\rnonce %08x", nNonce);
 	  genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
 	}
 	genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
