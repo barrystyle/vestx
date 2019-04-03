@@ -1,25 +1,17 @@
 VESTX integration/staging tree
 ==============================
 
-https://www.vestxcoin.com/
+- built on bitcoin 0.17.1
+- uses components from xsn/fxtc/dash 
+- simultaneous pow/pos operation with masternodes
+- pow algorithm is x16rt (gincoin-type)
+- pos and pow timing is set at 40 seconds
+- capable of 250tps peak
+- coin schedule set for coinswap from older vestx (2:1 @ 20bn),
+  - blocks 1 - 25,000 : 5000 VESTX
+  - blocks 25,000 -   : 1000 VESTX
+- masternode collateral is 25,000,000 VESTX
+- masternode / miner/minting split is 60/40%
 
-What is VESTX?
-----------------
-
-VESTX is an experimental digital currency that enables instant payments to
-anyone, anywhere in the world. VESTX uses peer-to-peer technology to operate
-with no central authority: managing transactions and issuing money are carried
-out collectively by the network. VESTX is based on the codebase of XSN (Stakenet).
-
-License
--------
-
-VESTX is released under the terms of the MIT license. See [COPYING](COPYING) for more
-information or see https://opensource.org/licenses/MIT.
-
-Development Process
--------------------
-
-The `master` branch is regularly built and tested, but is not guaranteed to be
-completely stable. 
+migration to bitcoin 0.18 already underway..
 
