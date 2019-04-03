@@ -140,7 +140,7 @@ public:
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
-        nCollateralLevels = { 50000 };
+        nCollateralLevels = { 15000000 };
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60;
         strSporkPubKey = "03cfd340c928af09534e019fa5c94ffe4ff36b478d7fa69a71d9365218fe9c2b8c"; // 02042019
