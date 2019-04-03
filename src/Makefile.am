@@ -141,7 +141,6 @@ BITCOIN_CORE_H = \
   miner.h \
   net.h \
   net_processing.h \
-  net_processing_vestx.h \
   netfulfilledman.h \
   netaddress.h \
   netbase.h \
@@ -254,7 +253,6 @@ libvestx_server_a_SOURCES = \
   miner.cpp \
   net.cpp \
   net_processing.cpp \
-  net_processing_vestx.cpp \
   netfulfilledman.cpp \
   noui.cpp \
   policy/fees.cpp \

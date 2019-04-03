@@ -54,7 +54,6 @@
 #include <activemasternode.h>
 #include <instantx.h>
 #include <wallet/wallet.h>
-#include <net_processing_vestx.h>
 #include <masternodeman.h>
 #include <masternode-payments.h>
 #include <netfulfilledman.h>
