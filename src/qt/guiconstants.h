@@ -1,10 +1,9 @@
 // Copyright (c) 2011-2018 The Bitcoin Core developers
-// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef FXTC_QT_GUICONSTANTS_H
-#define FXTC_QT_GUICONSTANTS_H
+#ifndef BITCOIN_QT_GUICONSTANTS_H
+#define BITCOIN_QT_GUICONSTANTS_H
 
 /* Milliseconds between model updates */
 static const int MODEL_UPDATE_DELAY = 250;
@@ -53,4 +52,4 @@ static const int MAX_URI_LENGTH = 255;
 #define QAPP_APP_NAME_TESTNET "VESTX-Qt-testnet"
 #define QAPP_APP_NAME_REGTEST "VESTX-Qt-regtest"
 
-#endif // FXTC_QT_GUICONSTANTS_H
+#endif // BITCOIN_QT_GUICONSTANTS_H

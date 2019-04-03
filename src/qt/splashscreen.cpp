@@ -63,7 +63,7 @@ SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const Netw
     pixPaint.drawPixmap(rectIcon, icon);
 
     // copyright information
-    pixPaint.setFont(QFont(font, 9 * fontFactor));
+    pixPaint.setFont(QFont(font, 8 * fontFactor));
     pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace, copyrightTextBTC);
     pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace + 12, copyrightTextDash);
     pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace + 24, copyrightTextFXTC);
