@@ -89,9 +89,9 @@ private:
     std::unique_ptr<interfaces::Handler> m_handler_notify_header_tip;
     std::unique_ptr<interfaces::Handler> m_handler_additional_data_sync_progress_changed;
     OptionsModel *optionsModel;
+    QString cachedMasternodeCountString;
     PeerTableModel *peerTableModel;
     BanTableModel *banTableModel;
-    QString cachedMasternodeCountString;
 
     QTimer *pollTimer;
     QTimer *pollMnTimer;
