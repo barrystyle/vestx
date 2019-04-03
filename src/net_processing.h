@@ -9,6 +9,7 @@
 #include <net.h>
 #include <validationinterface.h>
 #include <consensus/params.h>
+#include <chainparams.h>
 
 /** Default for -maxorphantx, maximum number of orphan transactions kept in memory */
 static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
@@ -96,5 +97,26 @@ struct CNodeStateStats {
 bool GetNodeStateStats(NodeId nodeid, CNodeStateStats &stats);
 /** Increase a node's misbehavior score. */
 void Misbehaving(NodeId nodeid, int howmuch, const std::string& message="");
+
+class CNode;
+class CInv;
+class CConnman;
+class CNetMsgMaker;
+class CDataStream;
+
+namespace net_processing_vestx
+{
+	bool ProcessGetData(CNode* pfrom, const Consensus::Params& consensusParams, CConnman* connman,
+						const CInv &inv);
+
+	void ProcessExtension(CNode* pfrom, const std::string &strCommand, CDataStream& vRecv, CConnman *connman);
+
+	bool AlreadyHave(const CInv &inv);
+
+	bool TransformInvForLegacyVersion(CInv &inv, CNode *pfrom, bool fForSending);
+
+	/** Run an instance of extension processor */
+	void ThreadProcessExtensions(CConnman *pConnman);
+}
 
 #endif // BITCOIN_NET_PROCESSING_H
