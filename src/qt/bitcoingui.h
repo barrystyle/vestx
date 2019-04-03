@@ -1,11 +1,10 @@
 // Copyright (c) 2011-2018 The Bitcoin Core developers
 // Copyright (c) 2014-2017 The Dash Core developers
-// Copyright (c) 2018 FXTC developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef FXTC_QT_BITCOINGUI_H
-#define FXTC_QT_BITCOINGUI_H
+#ifndef BITCOIN_QT_BITCOINGUI_H
+#define BITCOIN_QT_BITCOINGUI_H
 
 #if defined(HAVE_CONFIG_H)
 #include <config/vestx-config.h>
@@ -347,4 +346,4 @@ private Q_SLOTS:
     void onMenuSelection(QAction* action);
 };
 
-#endif // FXTC_QT_BITCOINGUI_H
+#endif // BITCOIN_QT_BITCOINGUI_H
