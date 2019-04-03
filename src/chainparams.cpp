@@ -7,7 +7,6 @@
 #include <consensus/merkle.h>
 
 #include <tinyformat.h>
-#include <util.h>
 #include <utilstrencodings.h>
 #include <arith_uint256.h>
 
@@ -65,7 +64,7 @@ public:
     CMainParams() {
         strNetworkID = "main";
 
-        consensus.nFirstPoSBlock = 300;
+        consensus.nFirstPoSBlock = 500;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -85,7 +84,7 @@ public:
         consensus.nPosTargetSpacing = consensus.nPowTargetSpacing;
         consensus.nPosTargetTimespan = consensus.nPowTargetTimespan;
         consensus.nMasternodeMinimumConfirmations = 15;
-        consensus.nStakeMinAge = 10 * 60;
+        consensus.nStakeMinAge = 60 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
         consensus.nModifierInterval = 60 * 20;
         consensus.nCoinbaseMaturity = 20;
@@ -117,35 +116,18 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
-        pchMessageStart[0] = 0xb0;
-        pchMessageStart[1] = 0xc0;
-        pchMessageStart[2] = 0xd0;
-        pchMessageStart[3] = 0xe0;
+        pchMessageStart[0] = 0xc4;
+        pchMessageStart[1] = 0x4d;
+        pchMessageStart[2] = 0xe4;
+        pchMessageStart[3] = 0x4f;
         nDefaultPort = 20000;
         nPruneAfterHeight = 100000;
         nMaxReorganizationDepth = 100;
 
-	// genesis routine
-	uint32_t nTime = 1552540000;
-	uint32_t nNonce = 0;
-
-	if (nNonce == 0)
-	{
-	  while (UintToArith256(genesis.GetHash()) > UintToArith256(consensus.powLimit))
-	  {
-		  nNonce++;
-		  if (nNonce % 1024 == 0) printf("\rnonce %08x", nNonce);
-		  genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
-	  }
-	  printf("\ngenesis is %s\n", genesis.ToString().c_str());
-	}
-	else
-	{
-          genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
-	}
-
+        genesis = CreateGenesisBlock(1554250000, 42105, 0x1f00ffff, 1, 0 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        // assert(consensus.hashGenesisBlock == uint256S("000014e6788fe294da86bdbf9af9c9f17a30effb7bd35b0c7a50d6398114358e"));
+        assert(consensus.hashGenesisBlock == uint256S("0000beeb61cc43b60e855ceaad27378e90a59d6e9c54e1476406f48c5ffccda3"));
+
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,70);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,132);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,198);
@@ -165,12 +147,12 @@ public:
 
         checkpointData = {
             {
-                { 0, consensus.hashGenesisBlock }
+                { 0, uint256S("0000beeb61cc43b60e855ceaad27378e90a59d6e9c54e1476406f48c5ffccda3") }
             }
         };
 
         chainTxData = ChainTxData{
-            nTime,
+            1554250000,
             1,
             1.0
         };

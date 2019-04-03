@@ -1141,7 +1141,17 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
 
 CAmount GetBlockSubsidy(int nPrevHeight, const Consensus::Params& consensusParams, bool fSuperblockPartOnly)
 {
-    return 1000 * COIN;
+    CAmount nSubsidy = 0 * COIN;
+
+    // to swap legacy vestx chain 2:1
+    if (nPrevHeight == 0)
+        nSubsidy = 20000000000 * COIN;
+    else if (nPrevHeight > 0 && nPrevHeight < 25000)
+        nSubsidy = 5000 * COIN;
+    else if (nPrevHeight >= 25000)
+        nSubsidy = 1000 * COIN;
+
+    return nSubsidy;
 }
 
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
