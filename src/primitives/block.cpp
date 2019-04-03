@@ -10,9 +10,12 @@
 #include <utilstrencodings.h>
 #include <crypto/common.h>
 
+#define TIME_MASK 0xffffff80
 uint256 CBlockHeader::GetHash() const
 {
-    return TestHash(BEGIN(nVersion), END(nNonce));
+    int32_t nTimeX16R = nTime & TIME_MASK;
+    uint256 hashTime = Hash(BEGIN(nTimeX16R), END(nTimeX16R));
+    return HashX16R(BEGIN(nVersion), END(nNonce), hashTime);
 }
 
 bool CBlock::IsProofOfStake() const
