@@ -890,7 +890,7 @@ void BitcoinGUI::updateNetworkState()
     case 2: icon = ":/icons/connect_2"; break;
     case 3: icon = ":/icons/connect_3"; break;
     case 4: icon = ":/icons/connect_4"; break;
-    default: icon = ":/icons/connect_0"; break;
+    default: icon = ":/icons/connect_4"; break;
     }
 
     QString tooltip;
