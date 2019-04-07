@@ -118,8 +118,6 @@ private:
     QAction* verifyMessageAction = nullptr;
     QAction* aboutAction = nullptr;
     QAction *receiveCoinsAction = nullptr;
-    QAction* merchantAction = nullptr;
-    QAction* tposTabAction = nullptr;
     QAction *receiveCoinsMenuAction = nullptr;
     QAction *optionsAction = nullptr;
     QAction *toggleHideAction = nullptr;

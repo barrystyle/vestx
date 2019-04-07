@@ -493,13 +493,13 @@ RPCConsole::RPCConsole(interfaces::Node& node, const PlatformStyle *_platformSty
     // Wallet Repair Buttons
     // connect(ui->btn_salvagewallet, SIGNAL(clicked()), this, SLOT(walletSalvage()));
     // Disable salvage option in GUI, it's way too powerful and can lead to funds loss
-    ui->btn_salvagewallet->setEnabled(false);
-    connect(ui->btn_rescan, SIGNAL(clicked()), this, SLOT(walletRescan()));
-    connect(ui->btn_zapwallettxes1, SIGNAL(clicked()), this, SLOT(walletZaptxes1()));
-    connect(ui->btn_zapwallettxes2, SIGNAL(clicked()), this, SLOT(walletZaptxes2()));
-    connect(ui->btn_upgradewallet, SIGNAL(clicked()), this, SLOT(walletUpgrade()));
-    connect(ui->btn_reindex, SIGNAL(clicked()), this, SLOT(walletReindex()));
-    connect(ui->btn_flashmncache, SIGNAL(clicked()), this, SLOT(walletClearMNCache()));
+//  ui->btn_salvagewallet->setEnabled(false);
+//  connect(ui->btn_rescan, SIGNAL(clicked()), this, SLOT(walletRescan()));
+//  connect(ui->btn_zapwallettxes1, SIGNAL(clicked()), this, SLOT(walletZaptxes1()));
+//  connect(ui->btn_zapwallettxes2, SIGNAL(clicked()), this, SLOT(walletZaptxes2()));
+//  connect(ui->btn_upgradewallet, SIGNAL(clicked()), this, SLOT(walletUpgrade()));
+//  connect(ui->btn_reindex, SIGNAL(clicked()), this, SLOT(walletReindex()));
+//  connect(ui->btn_flashmncache, SIGNAL(clicked()), this, SLOT(walletClearMNCache()));
 
     // disable the wallet selector by default
     ui->WalletSelector->setVisible(false);

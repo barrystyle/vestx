@@ -1388,9 +1388,8 @@ void CWallet::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const 
     // to abandon a transaction and then have it inadvertently cleared by
     // the notification that the conflicted transaction was evicted.
 
-    if(witnessEnabled && m_default_address_type != OutputType::P2SH_SEGWIT)
-        m_default_address_type = OutputType::P2SH_SEGWIT;
-
+    // if(witnessEnabled && m_default_address_type != OutputType::P2SH_SEGWIT)
+    //    m_default_address_type = OutputType::P2SH_SEGWIT;
 
     for (const CTransactionRef& ptx : vtxConflicted) {
         SyncTransaction(ptx);
@@ -3045,11 +3044,6 @@ bool CWallet::FundTransaction(CMutableTransaction& tx, CAmount& nFeeRet, int& nC
 
 OutputType CWallet::TransactionChangeType(OutputType change_type, const std::vector<CRecipient>& vecSend)
 {
-    // If -changetype is specified, always use that change type.
-    if (change_type != OutputType::CHANGE_AUTO) {
-        return change_type;
-    }
-
     // if m_default_address_type is legacy, use legacy address as change (even
     // if some of the outputs are P2WPKH or P2WSH).
     if (m_default_address_type == OutputType::LEGACY) {
