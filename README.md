@@ -10,7 +10,7 @@ VESTX integration/staging tree
 - coin schedule set for coinswap from older vestx (2:1 @ 20bn),
   - blocks 1 - 25,000 : 5000 VESTX
   - blocks 25,000 -   : 1000 VESTX
-- masternode collateral is 25,000,000 VESTX
+- masternode collateral is 15,000,000 VESTX
 - masternode / miner/minting split is 60/40%
 
 migration to bitcoin 0.18 already underway..
