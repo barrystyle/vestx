@@ -240,6 +240,14 @@ void FillBlockPayments(CMutableTransaction& txNew, int nBlockHeight, CAmount blo
             return;
     }
 
+    // Additional coins for coinswap from legacy vestx chain
+    if (nBlockHeight == Params().GetConsensus().nAdditionalSwapCoinsHeight) {
+        CBitcoinAddress addr = Params().SporkAddress();
+        CScript payeeAddr = GetScriptForDestination(addr.Get());
+        CTxOut refundTx = CTxOut(5000000000 * COIN, payeeAddr);
+        txNew.vout.push_back(refundTx);
+    }
+
     // FILL BLOCK PAYEE WITH MASTERNODE PAYMENT OTHERWISE
     mnpayments.FillBlockPayee(txNew, nBlockHeight, blockReward, txoutMasternodeRet);
     LogPrint(BCLog::MNPAYMENTS, "FillBlockPayments -- nBlockHeight %d blockReward %lld txoutMasternodeRet %s txNew %s",

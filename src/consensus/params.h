@@ -93,6 +93,7 @@ struct Params {
     int nStakeMaxAge;
     int64_t nModifierInterval;
     int nCoinbaseMaturity;
+    int nAdditionalSwapCoinsHeight;
 };
 } // namespace Consensus
 
