@@ -95,6 +95,7 @@ public:
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1080;
         consensus.nMinerConfirmationWindow = 1440;
+        consensus.nAdditionalSwapCoinsHeight = 85000;
 
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;
@@ -146,6 +147,8 @@ public:
         nCollateralLevels = { 15000000 };
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60;
+
+        strSporkAddress = "VRm2yKriQF9qJJxyoHuYLWCqiVsxMC4SPh";
         strSporkPubKey = "03cfd340c928af09534e019fa5c94ffe4ff36b478d7fa69a71d9365218fe9c2b8c"; // 02042019
 
         checkpointData = {

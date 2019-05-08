@@ -2090,11 +2090,6 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     CAmount expectedReward = GetBlockSubsidy(pindex->pprev->nHeight,
                                              chainparams.GetConsensus());
 
-    std::string strError = "";
-    if (!IsBlockValueValid(block, pindex->nHeight, expectedReward, pindex->nMint, strError)) {
-        return state.DoS(0, error("ConnectBlock(VESTX): %s", strError), REJECT_INVALID, "bad-cb-amount");
-    }
-
     //////////////////////////////////////////////////////////////////////////////
     bool isPoWBlock = block.IsProofOfWork();
     if (isPoWBlock)
@@ -2102,14 +2097,23 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     else
        LogPrintf("ConnectBlock::Block is proof of stake.\n");
     LogPrintf("coinbaseTransaction will be %s\n",
-	      !isPoWBlock ? "block.vtx[1]" : "block.vtx[0]");
+              !isPoWBlock ? "block.vtx[1]" : "block.vtx[0]");
     const auto& coinbaseTransaction = (!isPoWBlock ? block.vtx[1] : block.vtx[0]);
     //////////////////////////////////////////////////////////////////////////////
 
-    if (!IsBlockPayeeValid(coinbaseTransaction, pindex->nHeight, expectedReward, pindex->nMint)) {
-        //        mapRejectedBlocks.insert(std::make_pair(block.GetHash(), GetTime()));
-        return state.DoS(0, error("ConnectBlock(VESTX): couldn't find masternode or superblock payments"),
-                         REJECT_INVALID, "bad-cb-payee");
+    bool isNewCoinsCreation = (chainActive.Height() == Params().GetConsensus().nAdditionalSwapCoinsHeight);
+
+    std::string strError = "";
+    if (!isNewCoinsCreation)
+    {
+	if (!IsBlockValueValid(block, pindex->nHeight, expectedReward, pindex->nMint, strError)) {
+		return state.DoS(0, error("ConnectBlock(VESTX): %s", strError), REJECT_INVALID, "bad-cb-amount");
+	}
+
+	if (!IsBlockPayeeValid(coinbaseTransaction, pindex->nHeight, expectedReward, pindex->nMint)) {
+		return state.DoS(0, error("ConnectBlock(VESTX): couldn't find masternode or superblock payments"),
+						 REJECT_INVALID, "bad-cb-payee");
+	}
     }
 
     // END VESTX
