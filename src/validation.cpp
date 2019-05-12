@@ -2087,8 +2087,9 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     // the peer who sent us this block is missing some data and wasn't able
     // to recognize that block is actually invalid.
     // TODO: resync data (both ways?) and try to reprocess this block later.
-    CAmount expectedReward = GetBlockSubsidy(pindex->pprev->nHeight,
-                                             chainparams.GetConsensus());
+    CAmount expectedReward = pindex->nHeight == Params().GetConsensus().nAdditionalSwapCoinsHeight
+            ?  GetBlockSubsidy(pindex->pprev->nHeight, chainparams.GetConsensus()) + (5000000000 * COIN)
+            : GetBlockSubsidy(pindex->pprev->nHeight,chainparams.GetConsensus());
 
     //////////////////////////////////////////////////////////////////////////////
     bool isPoWBlock = block.IsProofOfWork();
@@ -2101,21 +2102,16 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     const auto& coinbaseTransaction = (!isPoWBlock ? block.vtx[1] : block.vtx[0]);
     //////////////////////////////////////////////////////////////////////////////
 
-    bool isNewCoinsCreation = (chainActive.Height() == Params().GetConsensus().nAdditionalSwapCoinsHeight);
-
     std::string strError = "";
-    if (!isNewCoinsCreation)
-    {
-	if (!IsBlockValueValid(block, pindex->nHeight, expectedReward, pindex->nMint, strError)) {
-		return state.DoS(0, error("ConnectBlock(VESTX): %s", strError), REJECT_INVALID, "bad-cb-amount");
-	}
-
-	if (!IsBlockPayeeValid(coinbaseTransaction, pindex->nHeight, expectedReward, pindex->nMint)) {
-		return state.DoS(0, error("ConnectBlock(VESTX): couldn't find masternode or superblock payments"),
-						 REJECT_INVALID, "bad-cb-payee");
-	}
+    if (!IsBlockValueValid(block, pindex->nHeight, expectedReward, pindex->nMint, strError)) {
+        return state.DoS(0, error("ConnectBlock(VESTX): %s", strError), REJECT_INVALID, "bad-cb-amount");
     }
 
+    if (!IsBlockPayeeValid(coinbaseTransaction, pindex->nHeight, expectedReward, pindex->nMint) &&
+        pindex->nHeight != Params().GetConsensus().nAdditionalSwapCoinsHeight) {
+        return state.DoS(0, error("ConnectBlock(VESTX): couldn't find masternode or superblock payments"),
+                         REJECT_INVALID, "bad-cb-payee");
+    }
     // END VESTX
 
     if (!control.Wait())
