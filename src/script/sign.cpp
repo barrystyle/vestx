@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <script/sign.h>
-
+#include <coins.h>
 #include <key.h>
 #include <policy/policy.h>
 #include <primitives/transaction.h>
@@ -389,6 +389,23 @@ SignatureData CombineSignatures(const CScript& scriptPubKey, const BaseSignature
     Solver(scriptPubKey, txType, vSolutions);
 
     return CombineSignatures(scriptPubKey, checker, txType, vSolutions, Stacks(scriptSig1), Stacks(scriptSig2), SigVersion::BASE).Output();
+}
+
+bool VerifySignature(const Coin& coin, const uint256 txFromHash, const CTransaction& txTo, unsigned int nIn, unsigned int flags)
+{
+    TransactionSignatureChecker checker(&txTo, nIn, 0);
+	
+    const CTxIn& txin = txTo.vin[nIn];
+//    if (txin.prevout.n >= txFrom.vout.size())
+//        return false;
+//    const CTxOut& txout = txFrom.vout[txin.prevout.n];
+
+    const CTxOut& txout = coin.out;
+
+    if (txin.prevout.hash != txFromHash)
+        return false;
+		
+    return VerifyScript(txin.scriptSig, txout.scriptPubKey, NULL, flags, checker);
 }
 
 namespace {

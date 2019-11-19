@@ -176,6 +176,9 @@ public:
     //! pointer to the index of the predecessor of this block
     CBlockIndex* pprev;
 
+    //! pointer to the index of the successor of this block
+    CBlockIndex* pnext;
+
     //! pointer to the index of some further predecessor of this block
     CBlockIndex* pskip;
 
@@ -232,6 +235,8 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    uint256 hashStateRoot; // qtum
+    uint256 hashUTXORoot; // qtum
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
@@ -243,6 +248,7 @@ public:
     {
         phashBlock = nullptr;
         pprev = nullptr;
+        pnext = nullptr;
         pskip = nullptr;
         nHeight = 0;
         nFile = 0;
@@ -268,6 +274,9 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
+        hashStateRoot  = uint256(); // qtum
+        hashUTXORoot   = uint256(); // qtum
+        nMoneySupply = 0;
     }
 
     CBlockIndex()
@@ -332,6 +341,9 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.hashStateRoot  = hashStateRoot; // qtum
+        block.hashUTXORoot   = hashUTXORoot; // qtum
+        block.prevoutStake   = prevoutStake;
         return block;
     }
 
@@ -478,6 +490,7 @@ public:
             READWRITE(VARINT(nDataPos));
         if (nStatus & BLOCK_HAVE_UNDO)
             READWRITE(VARINT(nUndoPos));
+        READWRITE(VARINT(nMoneySupply));
 
         READWRITE(nMint);
         READWRITE(nMoneySupply);
@@ -502,6 +515,10 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+        READWRITE(hashStateRoot);
+        READWRITE(hashUTXORoot);
+        READWRITE(nStakeModifier);
+        READWRITE(prevoutStake);
     }
 
     uint256 GetBlockHash() const
@@ -513,6 +530,8 @@ public:
         block.nTime           = nTime;
         block.nBits           = nBits;
         block.nNonce          = nNonce;
+        block.hashStateRoot   = hashStateRoot;
+        block.hashUTXORoot    = hashUTXORoot;
         return block.GetHash();
     }
 

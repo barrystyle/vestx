@@ -27,6 +27,7 @@
 #include <timedata.h>
 #include <txmempool.h>
 #include <utilmoneystr.h>
+#include <txdb.h>
 #include <wallet/fees.h>
 #include <kernel.h>
 #include <masternode-payments.h>

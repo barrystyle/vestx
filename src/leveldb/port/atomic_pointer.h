@@ -26,7 +26,7 @@
 #include <windows.h>
 #endif
 #ifdef OS_MACOSX
-#include <libkern/OSAtomic.h>
+#include <cpp-ethereum/libkern/OSAtomic.h>
 #endif
 
 #if defined(_M_X64) || defined(__x86_64__)
