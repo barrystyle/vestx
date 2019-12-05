@@ -10,6 +10,17 @@
 #include <stdint.h>
 
 /** The maximum allowed size for a serialized block, in bytes (only for buffer size limits) */
+extern unsigned int dgpMaxBlockSerSize;
+/** The maximum allowed weight for a block, see BIP 141 (network rule) */
+extern unsigned int dgpMaxBlockWeight;
+extern unsigned int dgpMaxBlockSize;
+
+/** The maximum allowed number of signature check operations in a block (network rule) */
+extern int64_t dgpMaxBlockSigOps;
+extern unsigned int dgpMaxProtoMsgLength;
+extern unsigned int dgpMaxTxSigOps;
+
+/** The maximum allowed size for a serialized block, in bytes (only for buffer size limits) */
 static const unsigned int MAX_BLOCK_SERIALIZED_SIZE = 4000000;
 /** The maximum allowed weight for a block, see BIP 141 (network rule) */
 static const unsigned int MAX_BLOCK_WEIGHT = 4000000;
@@ -28,5 +39,7 @@ static const size_t MIN_SERIALIZABLE_TRANSACTION_WEIGHT = WITNESS_SCALE_FACTOR *
 static constexpr unsigned int LOCKTIME_VERIFY_SEQUENCE = (1 << 0);
 /** Use GetMedianTimePast() instead of nTime for end point timestamp. */
 static constexpr unsigned int LOCKTIME_MEDIAN_TIME_PAST = (1 << 1);
+
+void updateBlockSizeParams(unsigned int newBlockSize);
 
 #endif // BITCOIN_CONSENSUS_CONSENSUS_H

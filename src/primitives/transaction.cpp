@@ -136,7 +136,7 @@ std::string CMutableTransaction::ToString() const
     return str;
 }
 
-///////////////////////////////////////////////////////////// qtum
+///////////////////////////////////////////////////////////
 bool CTransaction::HasCreateOrCall() const{
     for(const CTxOut& v : vout){
         if(v.scriptPubKey.HasOpCreate() || v.scriptPubKey.HasOpCall()){

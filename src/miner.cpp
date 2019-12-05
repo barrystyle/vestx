@@ -587,8 +587,6 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
     while (true) {
         try {
 
-            MilliSleep(1000);
-
             // Throw an error if no script was provided.  This can happen
             // due to some internal error but also if the keypool is empty.
             // In the latter case, already the pointer is NULL.
@@ -596,6 +594,7 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
                 throw std::runtime_error("No coinbase script available (mining requires a wallet)");
 
             do {
+                break; //! TODO REMOVE BEFORE MAINNET
                 bool fvNodesEmpty = connman.GetNodeCount(CConnman::CONNECTIONS_ALL) == 0;
                 if (!fvNodesEmpty && !IsInitialBlockDownload() && masternodeSync.IsSynced())
                     break;
@@ -630,9 +629,6 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
             }
             auto pblock = std::make_shared<CBlock>(pblocktemplate->block);
             IncrementExtraNonce(pblock.get(), pindexPrev, nExtraNonce);
-
-            LogPrintf("XsnMiner -- Running miner with %u transactions in block (%u bytes)\n", pblock->vtx.size(),
-                      ::GetSerializeSize(*pblock, SER_NETWORK, PROTOCOL_VERSION));
 
             //Sign block
             if (fProofOfStake)
@@ -684,11 +680,6 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
                         SetThreadPriority(THREAD_PRIORITY_LOWEST);
                         coinbaseScript->KeepScript();
 
-                        // In regression test mode, stop mining after a block is found. This
-                        // allows developers to controllably generate a block on demand.
-                        if (chainparams.MineBlocksOnDemand())
-                            throw boost::thread_interrupted();
-
                         break;
                     }
                     pblock->nNonce += 1;
@@ -699,9 +690,6 @@ void static VESTXMiner(const CChainParams& chainparams, CConnman& connman, CWall
 
                 // Check for stop or if block needs to be rebuilt
                 boost::this_thread::interruption_point();
-                // Regtest mode doesn't require peers
-                if (connman.GetNodeCount(CConnman::CONNECTIONS_ALL) == 0)
-                    break;
                 if (pblock->nNonce >= 0xffff0000)
                     break;
                 if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60)

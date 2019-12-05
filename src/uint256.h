@@ -14,7 +14,7 @@
 #include <vector>
 #include <crypto/common.h>
 
-//////////////////////////////////////// qtum
+//////////////////////////////////////
 #include <cpp-ethereum/libdevcore/Common.h>
 #include <cpp-ethereum/libdevcore/CommonData.h>
 #include <cpp-ethereum/libdevcore/FixedHash.h>
@@ -188,7 +188,7 @@ public:
 };
 
 
-////////////////////////////////////////////////////// qtum
+////////////////////////////////////////////////////
 inline dev::h256 uintToh256(const uint256& in)
 {
     std::vector<unsigned char> vHashBlock;

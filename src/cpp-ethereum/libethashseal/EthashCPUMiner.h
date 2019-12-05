@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "libdevcore/Worker.h"
+#include <cpp-ethereum/libdevcore/Worker.h>
 #include <cpp-ethereum/libethereum/GenericMiner.h>
 #include "EthashAux.h"
 

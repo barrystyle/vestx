@@ -94,6 +94,10 @@ struct Params {
     int64_t nModifierInterval;
     int nCoinbaseMaturity;
     int nAdditionalSwapCoinsHeight;
+    int nLastPOWBlock;
+    int nFirstMPoSBlock;
+    int nMPoSRewardRecipients;
+    int nFixUTXOCacheHFHeight;
 };
 } // namespace Consensus
 

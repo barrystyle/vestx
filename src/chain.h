@@ -235,8 +235,8 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
-    uint256 hashStateRoot; // qtum
-    uint256 hashUTXORoot; // qtum
+    uint256 hashStateRoot; 
+    uint256 hashUTXORoot; 
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     int32_t nSequenceId;
@@ -274,8 +274,8 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
-        hashStateRoot  = uint256(); // qtum
-        hashUTXORoot   = uint256(); // qtum
+        hashStateRoot  = uint256(); 
+        hashUTXORoot   = uint256(); 
         nMoneySupply = 0;
     }
 
@@ -293,6 +293,8 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+        hashStateRoot  = block.hashStateRoot; 
+        hashUTXORoot   = block.hashUTXORoot; 
 
         //Proof of Stake
         bnChainTrust = uint256();
@@ -341,8 +343,8 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
-        block.hashStateRoot  = hashStateRoot; // qtum
-        block.hashUTXORoot   = hashUTXORoot; // qtum
+        block.hashStateRoot  = hashStateRoot; 
+        block.hashUTXORoot   = hashUTXORoot; 
         block.prevoutStake   = prevoutStake;
         return block;
     }

@@ -374,4 +374,6 @@ std::unique_ptr<T> MakeUnique(Args&&... args)
  */
 int ScheduleBatchPriority(void);
 
+bool CheckHex(const std::string& str);
+
 #endif // BITCOIN_UTIL_H

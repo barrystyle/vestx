@@ -885,29 +885,7 @@ void Block::cleanup(bool _fullCommit)
 
 string Block::vmTrace(bytesConstRef _block, BlockChain const& _bc, ImportRequirements::value _ir)
 {
-	noteChain(_bc);
-
-	RLP rlp(_block);
-
-	cleanup(false);
-	BlockHeader bi(_block);
-	m_currentBlock = bi;
-	m_currentBlock.verify((_ir & ImportRequirements::ValidSeal) ? CheckEverything : IgnoreSeal, _block);
-	m_currentBlock.noteDirty();
-
-	LastHashes lh = _bc.lastHashes(m_currentBlock.parentHash());
-
-	string ret;
-	unsigned i = 0;
-	for (auto const& tr: rlp[1])
-	{
-		StandardTrace st;
-		st.setShowMnemonics();
-		execute(lh, Transaction(tr.data(), CheckTransaction::Everything), Permanence::Committed, st.onOp());
-		ret += (ret.empty() ? "[" : ",") + st.json();
-		++i;
-	}
-	return ret.empty() ? "[]" : (ret + "]");
+	return "[]";
 }
 
 std::ostream& dev::eth::operator<<(std::ostream& _out, Block const& _s)

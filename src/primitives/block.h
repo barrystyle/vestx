@@ -10,6 +10,7 @@
 #include <serialize.h>
 #include <uint256.h>
 
+static const int ethEngine = 1;
 static const int SER_WITHOUT_SIGNATURE = 1 << 3;
 
 /** Nodes collect new transactions into a block, hash them into a hash tree,
@@ -29,8 +30,8 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
-    uint256 hashStateRoot; // qtum
-    uint256 hashUTXORoot; // qtum
+    uint256 hashStateRoot; 
+    uint256 hashUTXORoot; 
     // proof-of-stake specific fields
     COutPoint prevoutStake;
     std::vector<unsigned char> vchBlockSig;
@@ -50,11 +51,13 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
-        READWRITE(hashStateRoot); // qtum
-        READWRITE(hashUTXORoot); // qtum
         READWRITE(prevoutStake);
         if (!(s.GetType() & SER_WITHOUT_SIGNATURE))
             READWRITE(vchBlockSig);
+        if (ethEngine) {
+            READWRITE(hashStateRoot);
+            READWRITE(hashUTXORoot);
+        }
     }
 
     void SetNull()
@@ -65,8 +68,8 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
-        hashStateRoot.SetNull(); // qtum
-        hashUTXORoot.SetNull(); // qtum
+        hashStateRoot.SetNull(); 
+        hashUTXORoot.SetNull(); 
         vchBlockSig.clear();
         prevoutStake.SetNull();
     }
@@ -183,8 +186,8 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
-        block.hashStateRoot  = hashStateRoot; // qtum
-        block.hashUTXORoot   = hashUTXORoot; // qtum
+        block.hashStateRoot  = hashStateRoot; 
+        block.hashUTXORoot   = hashUTXORoot; 
         block.vchBlockSig    = vchBlockSig;
         block.prevoutStake   = prevoutStake;
         return block;

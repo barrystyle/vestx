@@ -262,7 +262,7 @@ bool CScript::IsPayToPublicKeyHash() const
             (*this)[24] == OP_CHECKSIG);
 }
 
-///////////////////////////////////////////////////////// // qtum
+///////////////////////////////////////////////////////// 
 bool CScript::IsPayToPubkey() const
 {
     if (this->size() == 35 && (*this)[0] == 33 && (*this)[34] == OP_CHECKSIG

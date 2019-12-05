@@ -347,6 +347,11 @@ public:
      */
     unsigned int GetTotalSize() const;
 
+//////////////////////////////////////// 
+    bool HasCreateOrCall() const;
+    bool HasOpSpend() const;
+////////////////////////////////////////
+
     bool IsCoinBase() const
     {
         return (vin.size() == 1 && vin[0].prevout.IsNull());
@@ -356,6 +361,12 @@ public:
     {
         // ppcoin: the coin stake transaction is marked with the first output empty
         return (vin.size() > 0 && (!vin[0].prevout.IsNull()) && vout.size() >= 2 && vout[0].IsEmpty());
+    }
+
+    bool IsNormalTx() const
+    {
+        // not coin base or coin stake transaction
+        return !IsCoinBase() && !IsCoinStake();
     }
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)

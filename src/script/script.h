@@ -332,7 +332,7 @@ public:
         return serialize(m_value);
     }
 
-    ///////////////////////////////// qtum
+    ///////////////////////////////
     static uint64_t vch_to_uint64(const std::vector<unsigned char>& vch)
     {
         if (vch.size() > 8) {
@@ -546,6 +546,8 @@ public:
         return GetScriptOp(pc, end(), opcodeRet, nullptr);
     }
 
+    bool IsPayToPubkey() const;
+    bool IsPayToPubkeyHash() const;
 
     /** Encode/decode small integers: */
     static int DecodeOP_N(opcodetype opcode)
@@ -613,7 +615,7 @@ public:
 
     std::string ToString() const;
 
-    ///////////////////////////////////////// qtum
+    ///////////////////////////////////////
     bool HasOpCreate() const
     {
         return Find(OP_CREATE) == 1;

@@ -5,6 +5,7 @@
 
 #include <chainparams.h>
 #include <consensus/merkle.h>
+#include <consensus/consensus.h>
 
 #include <tinyformat.h>
 #include <utilstrencodings.h>
@@ -13,9 +14,11 @@
 #include <assert.h>
 #include <chainparamsseeds.h>
 
-#ifdef __MINGW32__
-#include <sys/time.h>
-#endif
+///////////////////////////////////////////// 
+#include <libdevcore/SHA3.h>
+#include <libdevcore/RLP.h>
+#include "arith_uint256.h"
+/////////////////////////////////////////////
 
 static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesisOutputScript, uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
@@ -35,6 +38,8 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
     genesis.hashPrevBlock.SetNull();
     genesis.hashMerkleRoot = BlockMerkleRoot(genesis);
+    genesis.hashStateRoot = uint256(h256Touint(dev::h256("e965ffd002cd6ad0e2dc402b8044de833e06b23127ea8c3d80aec91410771495"))); 
+    genesis.hashUTXORoot = uint256(h256Touint(dev::sha3(dev::rlp("")))); 
     return genesis;
 }
 
@@ -180,7 +185,15 @@ public:
         };
 
         /* disable fallback fee on mainnet */
-        m_fallback_fee_enabled = true;
+        m_fallback_fee_enabled = false;
+
+        consensus.nLastPOWBlock = 5000;
+        consensus.nMPoSRewardRecipients = 10;
+        consensus.nFirstMPoSBlock = consensus.nLastPOWBlock + 
+                                    consensus.nMPoSRewardRecipients + 
+                                    COINBASE_MATURITY;
+
+        consensus.nFixUTXOCacheHFHeight=100000;
     }
 };
 
@@ -192,14 +205,7 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
 
-	// quick note: test and temp networks operate on a existance window of 
-        // approx 3 hours, window is persistent forever if daemon doesnt get restarted
-        uint32_t current_time = (uint32_t)time(NULL);
-	uint32_t elapsed_day = current_time % 86400;
-	uint32_t start_of_day = current_time - elapsed_day;
-	uint32_t quadrant = start_of_day % 10800;
-
-        consensus.nFirstPoSBlock = 300;
+        consensus.nFirstPoSBlock = 75;
         consensus.nInstantSendKeepLock = 24;
         consensus.nBudgetPaymentsStartBlock = 0;
         consensus.nBudgetPaymentsCycleBlocks = 16616;
@@ -219,28 +225,15 @@ public:
         consensus.nPosTargetSpacing = consensus.nPowTargetSpacing;
         consensus.nPosTargetTimespan = consensus.nPowTargetTimespan;
         consensus.nMasternodeMinimumConfirmations = 15;
-        consensus.nStakeMinAge = 10 * 60;
+        consensus.nStakeMinAge = 60 * 60;
         consensus.nStakeMaxAge = 60 * 60 * 24 * 30;
         consensus.nModifierInterval = 60 * 20;
-        consensus.nCoinbaseMaturity = 15;
+        consensus.nCoinbaseMaturity = 20;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
         consensus.nRuleChangeActivationThreshold = 1080;
         consensus.nMinerConfirmationWindow = 1440;
-
-        // genesis routine
-        uint32_t nTime = start_of_day;
-        for(int i=0; i<quadrant; i++)
-	  nTime =+ 10800;
-        uint32_t nNonce = 0;
-
-	while (UintToArith256(genesis.GetHash()) > 
-               UintToArith256(consensus.powLimit)) {
-	  nNonce++;
-	  genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
-	}
-	genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
+        consensus.nAdditionalSwapCoinsHeight = 85000;
 
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;
@@ -265,46 +258,53 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
-        pchMessageStart[0] = 0xb1;
-        pchMessageStart[1] = 0xc1;
-        pchMessageStart[2] = 0xd1;
-        pchMessageStart[3] = 0xe1;
-        nDefaultPort = 30000;
+        pchMessageStart[0] = 0xfe;
+        pchMessageStart[1] = 0xfe;
+        pchMessageStart[2] = 0xfe;
+        pchMessageStart[3] = 0xfe;
+        nDefaultPort = 44444;
         nPruneAfterHeight = 100000;
         nMaxReorganizationDepth = 100;
+
+	uint32_t nTime = 1581430000;
+	uint32_t nNonce = 0;
+        while (UintToArith256(genesis.GetHash()) > UintToArith256(consensus.powLimit)) {
+	   nNonce++;
+           genesis = CreateGenesisBlock(nTime, nNonce, 0x1f00ffff, 1, 0 * COIN);
+           printf("\r%08x", nNonce);
+        }
+        consensus.hashGenesisBlock = genesis.GetHash();
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,70);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,132);
         base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,198);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
-        bech32_hrp = "xc";
+        bech32_hrp = "vx";
 
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
-        fMineBlocksOnDemand = false;
-        nCollateralLevels = { 50000 };
+        fMineBlocksOnDemand = true;
+        nCollateralLevels = { 15000000 };
         nPoolMaxTransactions = 3;
         nFulfilledRequestExpireTime = 60*60;
-        strSporkPubKey = "030a2b7fdf1f123f3686ebc00f1226a20275bc785570ef069e2c2d81b61d616e91";
+
+        strSporkAddress = "VRm2yKriQF9qJJxyoHuYLWCqiVsxMC4SPh";
+        strSporkPubKey = "03cfd340c928af09534e019fa5c94ffe4ff36b478d7fa69a71d9365218fe9c2b8c"; // 02042019
 
         checkpointData = {};
-        chainTxData = ChainTxData {};
 
         /* disable fallback fee on mainnet */
         m_fallback_fee_enabled = false;
-    }
-};
 
-/*
- * Regression test
- */
-class CRegTestParams : public CChainParams {
-public:
-    CRegTestParams() {
-        strNetworkID = "regtest";
+        consensus.nMPoSRewardRecipients = 10;
+        consensus.nFirstMPoSBlock = consensus.nLastPOWBlock +
+                                    consensus.nMPoSRewardRecipients +
+                                    COINBASE_MATURITY;
+
+        consensus.nFixUTXOCacheHFHeight=100000;
     }
 };
 
@@ -317,19 +317,19 @@ const CChainParams &Params() {
 
 std::unique_ptr<CChainParams> CreateChainParams(const std::string& chain)
 {
-    if (chain == CBaseChainParams::MAIN)
-        return std::unique_ptr<CChainParams>(new CMainParams());
-    else if (chain == CBaseChainParams::TESTNET)
-        return std::unique_ptr<CChainParams>(new CTestNetParams());
-    else if (chain == CBaseChainParams::REGTEST)
-        return std::unique_ptr<CChainParams>(new CRegTestParams());
-    throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
+    //return std::unique_ptr<CChainParams>(new CMainParams());
+    return std::unique_ptr<CChainParams>(new CTestNetParams());
 }
 
 void SelectParams(const std::string& network)
 {
     SelectBaseParams(network);
     globalChainParams = CreateChainParams(network);
+}
+
+std::string CChainParams::EVMGenesisInfo(dev::eth::Network network) const
+{
+    return dev::eth::genesisInfo(network);
 }
 
 void UpdateVersionBitsParameters(Consensus::DeploymentPos d, int64_t nStartTime, int64_t nTimeout)

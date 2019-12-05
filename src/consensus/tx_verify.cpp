@@ -8,6 +8,7 @@
 #include <primitives/transaction.h>
 #include <script/interpreter.h>
 #include <consensus/validation.h>
+#include <validation.h>
 
 // TODO remove the following dependencies
 #include <chain.h>
@@ -178,6 +179,15 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
         nValueOut += txout.nValue;
         if (!MoneyRange(nValueOut))
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-txouttotal-toolarge");
+    	///////////////////////////////////////////////////////////
+    	if (txout.scriptPubKey.HasOpCall() || txout.scriptPubKey.HasOpCreate()) {
+    		std::vector<valtype> vSolutions;
+    		txnouttype whichType;
+    		if (!Solver(txout.scriptPubKey, whichType, vSolutions, true)) {
+    			return state.DoS(100, false, REJECT_INVALID, "bad-txns-contract-nonstandard");
+    		}
+    	}
+    	///////////////////////////////////////////////////////////
     }
 
     // Check for duplicate inputs - note that this check is slow so we skip it in CheckBlock
